@@ -5,8 +5,8 @@ import sys
 
 def get_datadir():
     """Returns the data directory associated with this project"""
-    p = Path(__file__).parent.resolve().parent
-    datadir = Path(p.parent, "__Temporary", p.name + "_data")
+    p = Path(__file__).parent.parent.parent.parent
+    datadir = Path(p, "data")
     datadir.mkdir(parents=True, exist_ok=True)
     return datadir
 
