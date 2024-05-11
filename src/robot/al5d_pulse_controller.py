@@ -1,6 +1,7 @@
 from . import al5d_constants
 import numpy as np
 import serial
+import sys
 import time
 from .al5d_helper import RobotHelper
 import logging
@@ -32,7 +33,7 @@ class PulseController:
                 self.sp = serial.Serial(device, 9600)
             except serial.serialutil.SerialException as spex:
                 print(spex)
-                exit(1)            
+                sys.exit(1)            
         else:
             self.sp = sp
         self.command_finished = True
