@@ -7,8 +7,7 @@ import cmd_preprocess_representation
 import cmd_learn_motion_controller
 import cmd_run_robot
 
-
-print("End-to-end trained robot control. v0.1.0 April 7, 2024, Lotzi Bölöni\n")
+print("End-to-end trained robot control. v0.1.1 Aug 3, 2024, Lotzi Bölöni\n")
 
 print("1. Collect demonstrations interactively")
 print("2. View and annotate demonstrations")

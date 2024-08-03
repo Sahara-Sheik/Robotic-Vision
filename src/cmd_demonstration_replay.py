@@ -2,7 +2,8 @@ from helper import ui_choose_task, ui_choose_demo, analyze_demo
 from pathlib import Path
 import json
 import time
-from robot.al5d_position_controller import PositionController
+from robot.al5d_position_controller import PositionController, RobotPosition    
+import settings
 
 def replay_full_speed(robot_controller, demo_dir, maxsteps, delay = 0.1):
     """Runs"""
@@ -11,7 +12,8 @@ def replay_full_speed(robot_controller, demo_dir, maxsteps, delay = 0.1):
         file_name = Path(demo_dir, f"{i:05d}.json")
         with open(file_name, "r") as f:
             data = json.load(f)
-        robot_controller.move(data["rc-position-target"])
+        position = RobotPosition.from_dict(data["rc-position-target"])
+        robot_controller.move(position)
         time.sleep(delay)
 
 def replay_step_by_step(robot_controller, demo_dir, maxsteps, delay = 0.1):
@@ -40,7 +42,9 @@ def replay_step_by_step(robot_controller, demo_dir, maxsteps, delay = 0.1):
 def main():
     print("======== Demonstration replay =========")
 
-    robot_controller = PositionController("/dev/ttyUSB0") # or USB1
+    print("Connecting to the robot (make sure it is on, and connected)")
+    robot_controller = PositionController(settings.ROBOT_USB_PORT) 
+    print("Connection to robot successful")
 
     data_dir, task_dir = ui_choose_task()
     demo_dir = ui_choose_demo(task_dir)

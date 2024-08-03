@@ -2,13 +2,14 @@ from pathlib import Path
 from datetime import datetime
 import cv2
 import json
-import sys
+# import sys
 
 from helper import ui_choose_task
 from gamepad.gamepad_controller import GamepadController
 from keyboard.keyboard_controller import KeyboardController
 from robot.al5d_position_controller import PositionController
 from camera.camera_controller import CameraController
+import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -89,10 +90,10 @@ def main():
     # FIXME: robot address etc. must be moved to configuration
 
     # the robot position controller
-    robot_controller = PositionController("/dev/ttyUSB0") # or USB1
+    robot_controller = PositionController(settings.ROBOT_USB_PORT) 
 
     img_size = (256, 256) # was (128, 128)
-    camera_controller = CameraController(devices = [2], img_size = img_size)
+    camera_controller = CameraController(devices = settings.ACTIVE_CAMERA_LIST, img_size = img_size)
     camera_controller.visualize = True
     #cameratracker = None
     # the XBox controller - we are using the control loop from this one

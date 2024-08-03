@@ -64,11 +64,23 @@ class RobotPosition:
         retval = {}
         retval["height"] = self.height
         retval["distance"] = self.distance
-        retval["rotation"] = self.heading
+        retval["heading"] = self.heading
         retval["wrist_angle"] = self.wrist_angle
         retval["wrist_rotation"] = self.wrist_rotation
         retval["gripper"] = self.gripper
         return retval
+
+    @staticmethod
+    def from_dict(value):
+        """Creates the robot position from a dictionary """
+        retval = RobotPosition()
+        retval.height = value["height"]
+        retval.distance = value["distance"]
+        retval.heading = value["heading"]
+        retval.wrist_angle = value["wrist_angle"]
+        retval.wrist_rotation = value["wrist_rotation"]
+        retval.gripper = value["gripper"]
+        return retval 
 
     def __str__(self):
         return f"Position: h={self.height:.2} dist={self.distance:.2} rot={self.heading:.2f} wa={self.wrist_angle:.2f} wrot={self.wrist_rotation:.2f} gripper={self.gripper:.2f}" 
