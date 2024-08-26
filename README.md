@@ -15,3 +15,6 @@ top directory
         .venv
             <<< this is where the Python 3.10 environment goes
 ```
+
+Notes:
+* The software for the gamepad input, approxeng.input needs to be at version 2.5, and it requires python not higher than 3.10 (as it needs something called evdev, which seem to have problems with higher python)
