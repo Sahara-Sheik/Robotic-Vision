@@ -25,6 +25,10 @@ TRAINING_DATA_DIR = "."
 # Directory for models and checkpoints
 MODEL_DIR = "."
 
+# Directory for the checkout of the CONV_VAE project 
+# https://github.com/julian-8897/Conv-VAE-PyTorch
+CONV_VAE_DIR = "."
+
 # setting the specific directories based on the current machine
 machine_name = socket.gethostname()
 print("The name of the current machine is:" + machine_name)
@@ -40,4 +44,4 @@ if (machine_name == "tredy2"):
     DEMO_DIR = "/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-demos"
     TRAINING_DATA_DIR = "/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-training-data"
     MODEL_DIR = "/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-models"
-
+    CONV_VAE_DIR = "/home/lboloni/Documents/Hackingwork/_Checkouts/Julian-8897-Conv-VAE-PyTorch/Conv-VAE-PyTorch"
