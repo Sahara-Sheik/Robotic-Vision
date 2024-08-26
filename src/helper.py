@@ -1,17 +1,19 @@
 from pathlib import Path
 import sys
+import settings
 
 # shared code for the various commands
 
-def get_datadir():
+def get_demodir():
     """Returns the data directory associated with this project"""
-    p = Path(__file__).parent.parent.parent.parent
-    datadir = Path(p, "data")
-    datadir.mkdir(parents=True, exist_ok=True)
-    return datadir
+    # p = Path(__file__).parent.parent.parent.parent
+    # datadir = Path(p, "data")
+    demodir = Path(settings.DEMO_DIR)
+    demodir.mkdir(parents=True, exist_ok=True)
+    return demodir
 
 def ui_choose_task(offer_task_creation = False):
-    data_dir = get_datadir()
+    data_dir = get_demodir()
     demos_dir = Path(data_dir, "demos")
     if demos_dir.exists():
         tasks = [item for item in demos_dir.iterdir() if item.is_dir()]
