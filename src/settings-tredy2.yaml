@@ -1,0 +1,26 @@
+robot:
+  
+  # The USB port where the AL5D robot is connected on this particular computer.
+  # alternatives: linux: /dev/ttyUSB0, /dev/ttyUSB1
+  usb_port: "/dev/ttyUSB0"
+
+  # The camera numbers which should be used for the robot, as a list
+  # Typically 0 is the webcam of the computer, other ones in the order they are connected
+  active_camera_list: [2]
+
+demos:
+
+  # Data directory for demonstrations. This is where demonstrations are saved, or loaded from in the case of replay
+  directory: "."
+
+training:
+  # Data directory for training data. This is where the training data is kept and organized 
+  directory: "."
+
+conv_vae:
+  # Directory for the checkout of the CONV_VAE project 
+  # https://github.com/julian-8897/Conv-VAE-PyTorch
+  code_dir: '/home/lboloni/Documents/Hackingwork/_Checkouts/Julian-8897-Conv-VAE-PyTorch/Conv-VAE-PyTorch'
+  model_dir: '/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-models/Conv-VAE/'
+  model_file: '0817_155635/checkpoint-epoch20.pth'
+  training_data_dir: '/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-training-data/vae-training-data'   

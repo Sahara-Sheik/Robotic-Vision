@@ -1,3 +1,11 @@
+import sensorprocessing.sensor_processing
+
+# This code is implementing the behavior cloning learning
+
+def prepare_training_data():
+    """Prepares the training data by precomputing the latent encoding for all the input"""
+    # We assume that all the demonstrations are the training data
+
 
 def main():
     print("Learn motion controller")
