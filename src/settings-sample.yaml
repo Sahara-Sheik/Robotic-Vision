@@ -27,6 +27,10 @@ conv_vae:
   # Directory for the checkout of the CONV_VAE project 
   # https://github.com/julian-8897/Conv-VAE-PyTorch
   code_dir: 'path/to/checkout/Julian-8897-Conv-VAE-PyTorch/Conv-VAE-PyTorch'
+  # The json file which is going to be used as the starting point
+  json_template: '/path/to/the/json/file'
+  # The name of the model that is used in the JSON file 
+  model_name: 'VAE_Robot'
   model_dir: '/path/to/where/to/store/the/model/VisionBasedRobotManipulator-models/Conv-VAE/'
   model_file: 'path/to/checkpoint/to/use/checkpoint-epoch20.pth'
   training_data_dir: 'path/to/training/data/dir/vae-training-data'   

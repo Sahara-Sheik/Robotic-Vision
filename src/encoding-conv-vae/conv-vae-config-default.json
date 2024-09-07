@@ -10,10 +10,9 @@
         }
     },
     "data_loader": {
-        "###type-prev": "RobotDataLoader",
         "type": "CelebDataLoader",
         "args": {
-            "data_dir": "/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-training-data/vae-training-data",
+            "data_dir": "/path/to/training/data",
             "batch_size": 64,
             "shuffle": true,
             "validation_split": 0.2,
@@ -39,7 +38,7 @@
     },
     "trainer": {
         "epochs": 200,
-        "save_dir": "/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-models/Conv-VAE/",
+        "save_dir": "/path/to/model/save/data",
         "save_period": 100,
         "verbosity": 2,
         "monitor": "min val_loss",
