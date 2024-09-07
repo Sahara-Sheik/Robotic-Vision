@@ -20,7 +20,7 @@ training:
 conv_vae:
   # Directory for the checkout of the CONV_VAE project 
   # https://github.com/julian-8897/Conv-VAE-PyTorch
-  code_dir: '/home/lboloni/Documents/Hackingwork/_Checkouts/Julian-8897-Conv-VAE-PyTorch/Conv-VAE-PyTorch'
-  model_dir: '/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-models/Conv-VAE/'
-  model_file: '0817_155635/checkpoint-epoch20.pth'
-  training_data_dir: '/home/lboloni/Documents/Hackingwork/__Temporary/VisionBasedRobotManipulator-training-data/vae-training-data'   
+  code_dir: 'path/to/checkout/Julian-8897-Conv-VAE-PyTorch/Conv-VAE-PyTorch'
+  model_dir: '/path/to/where/to/store/the/model/VisionBasedRobotManipulator-models/Conv-VAE/'
+  model_file: 'path/to/checkpoint/to/use/checkpoint-epoch20.pth'
+  training_data_dir: 'path/to/training/data/dir/vae-training-data'   
