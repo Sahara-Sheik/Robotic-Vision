@@ -1,14 +1,12 @@
 from pathlib import Path
 import sys
-import settings
+from settings import Config
 
 # shared code for the various commands
 
 def get_demodir():
     """Returns the data directory associated with this project"""
-    # p = Path(__file__).parent.parent.parent.parent
-    # datadir = Path(p, "data")
-    demodir = Path(settings.DEMO_DIR)
+    demodir = Path(Config().values["demos"]["directory"])
     demodir.mkdir(parents=True, exist_ok=True)
     return demodir
 

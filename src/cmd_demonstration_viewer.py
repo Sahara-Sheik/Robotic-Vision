@@ -17,9 +17,6 @@ def show(current, demo_dir, cameras, axs):
         im.set_data(image)
     plt.draw()
 
-
-
-
 def main():
     print("======= Demonstration viewer and annotator ========")
     data_dir, task_dir = ui_choose_task()

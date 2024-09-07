@@ -8,10 +8,16 @@ robot:
   # Typically 0 is the webcam of the computer, other ones in the order they are connected
   active_camera_list: [2]
 
+  ## Size of the latent encoding
+  ## FIXME: in the case of the Conv-VAE, this number must be the same as the one
+  ## in the conf-robot-machinename.json, latent_dims
+  latent_encoding_size: 128
+
+
 demos:
 
   # Data directory for demonstrations. This is where demonstrations are saved, or loaded from in the case of replay
-  directory: "."
+  directory: "/path/to/the/directory/of/demonstrations"
 
 training:
   # Data directory for training data. This is where the training data is kept and organized 

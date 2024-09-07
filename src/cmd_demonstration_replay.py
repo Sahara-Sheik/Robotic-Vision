@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import time
 from robot.al5d_position_controller import PositionController, RobotPosition    
-import settings
+from settings import Config
 
 def replay_full_speed(robot_controller, demo_dir, maxsteps, delay = 0.1):
     """Runs"""
@@ -43,7 +43,7 @@ def main():
     print("======== Demonstration replay =========")
 
     print("Connecting to the robot (make sure it is on, and connected)")
-    robot_controller = PositionController(settings.ROBOT_USB_PORT) 
+    robot_controller = PositionController(Config().values["robot"]["usb_port"]) 
     print("Connection to robot successful")
 
     data_dir, task_dir = ui_choose_task()

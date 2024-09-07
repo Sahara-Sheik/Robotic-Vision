@@ -9,7 +9,8 @@ from gamepad.gamepad_controller import GamepadController
 from keyboard.keyboard_controller import KeyboardController
 from robot.al5d_position_controller import PositionController
 from camera.camera_controller import CameraController
-import settings
+
+from settings import Config
 
 import logging
 logger = logging.getLogger(__name__)
@@ -90,10 +91,10 @@ def main():
     # FIXME: robot address etc. must be moved to configuration
 
     # the robot position controller
-    robot_controller = PositionController(settings.ROBOT_USB_PORT) 
+    robot_controller = PositionController(Config().values["robot"]["usb_port"]) 
 
     img_size = (256, 256) # was (128, 128)
-    camera_controller = CameraController(devices = settings.ACTIVE_CAMERA_LIST, img_size = img_size)
+    camera_controller = CameraController(devices = Config().values["robot"]["active_camera_list"], img_size = img_size)
     camera_controller.visualize = True
     #cameratracker = None
     # the XBox controller - we are using the control loop from this one
