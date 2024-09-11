@@ -37,9 +37,9 @@
         }
     },
     "trainer": {
-        "epochs": 200,
+        "epochs": 3,
         "save_dir": "/path/to/model/save/data",
-        "save_period": 100,
+        "save_period": 1,
         "verbosity": 2,
         "monitor": "min val_loss",
         "early_stop": 10,

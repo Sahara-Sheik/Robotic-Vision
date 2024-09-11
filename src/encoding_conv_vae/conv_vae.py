@@ -4,6 +4,10 @@ sys.path.append("..")
 from settings import Config
 
 import argparse
+import json
+import re
+import pathlib
+
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -30,7 +34,7 @@ import logging
 
 
 
-def get_config(): 
+def get_config(vae_config_yaml): 
     """Creates the configuration object of the conv-vae package. It is doing this by emulating the command line, but essentially most of the information is in a json file."""
     # FIXME: pytorch template??? this is probably some bogus stuff
     args = argparse.ArgumentParser(description='PyTorch Template')
@@ -41,9 +45,7 @@ def get_config():
     args.add_argument('-d', '--device', default=None, type=str,
                         help='indices of GPUs to enable (default: all)')
 
-    Config().values[]
-
-    value = ["this-script", f"-c{settings.VAE_CONFIG}"]
+    value = ["this-script", f"-c{vae_config_yaml}"]
     # we are changing the parameters from here, to avoid changing the github 
     # downloaded package
     sys.argv = value
@@ -116,7 +118,7 @@ def create_configured_vae_json():
     with open(json_temporary_path, 'w') as file:
         # Write the dictionary to the file in JSON format
         json.dump(data, file, indent=4)  # The `indent=4` makes the JSON more readable
-
+    return json_temporary_path
 
 def latest_model(run_path):
     """Returns the filename of the latest checkpoint from the training_run path"""
