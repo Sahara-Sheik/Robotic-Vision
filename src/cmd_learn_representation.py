@@ -1,7 +1,7 @@
 # Learning a representation. For the time being, this code is learning a convolutional VAE.
 
 import settings
-from encoding-conv-vae.conv_vae import get_config, train
+from encoding_conv_vae.conv_vae import get_config, train
 
 
 
