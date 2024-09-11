@@ -20,7 +20,7 @@ class Config:
             home_directory = Path.home()
             main_config = Path(home_directory, ".config", "VisionBasedRobotManipulator","mainsettings.yaml")
             if not main_config.exists():
-                raise Exception("Missing main config file: {main_config}")
+                raise Exception(f"Missing main config file: {main_config}")
             with main_config.open("rt") as handle:
                 main_config = yaml.safe_load(handle)
             configpath = main_config["configpath"]
