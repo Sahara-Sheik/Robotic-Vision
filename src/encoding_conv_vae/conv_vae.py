@@ -113,7 +113,6 @@ def create_configured_vae_json():
     # the temporary json file: above the models in conv-vae-temp.json
     json_temporary_path = pathlib.Path(Config().values["conv_vae"]["model_dir"], "conv-vae-configured.json")
 
-
     # Open a file in write mode
     with open(json_temporary_path, 'w') as file:
         # Write the dictionary to the file in JSON format
@@ -142,3 +141,50 @@ def latest_training_run(model_path):
     subdirs= [d.name for d in model_path.iterdir() if d.is_dir()]
     latest = sorted(subdirs, reverse=True)[0]
     return latest
+
+
+def latest_json_and_model(values):
+    """Returns the latest Conv-Vae path and model, taking the information from the values dict of the config"""
+    model_path = pathlib.Path(Config().values["conv_vae"]["model_dir"])
+    model_path = pathlib.Path(model_path, "models", Config().values["conv_vae"]["model_name"])
+    latest = latest_training_run(model_path)
+    # print(latest)
+    model_path = pathlib.Path(model_path, latest)
+    model = latest_model(model_path)
+    # The model from which we are starting        
+    resume_model = pathlib.Path(model_path, model)
+    jsonfile = pathlib.Path(model_path, "config.json")
+    print(f"resume_model and jsonfile are:\n\tresume_model={resume_model}\n\tjsonfile={jsonfile}")
+    return jsonfile, resume_model 
+
+def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
+    """Returns the configuration object of the Experiment-Conv-Vae"""
+    # As the code is highly dependent on the command line, emulating it here
+    args = argparse.ArgumentParser(description='PyTorch Template')
+    args.add_argument('-c', '--config', default=None, type=str,
+                    help='config file path (default: None)')
+    args.add_argument('-r', '--resume', default=None, type=str,
+                    help='path to latest checkpoint (default: None)')
+    args.add_argument('-d', '--device', default=None, type=str,
+                    help='indices of GPUs to enable (default: all)')
+
+
+    # value = ["this-script", f"-c{file}", f"-r{model}"]
+    value = ["this-script", f"-c{jsonfile}", f"-r{resume_model}"]
+
+    # we are changing the parameters from here, to avoid changing the github downloaded package
+    savedargv = sys.argv
+    sys.argv = value
+    config = ConfigParser.from_args(args)
+    sys.argv = savedargv
+    print(json.dumps(config.config, indent=4))
+    # if it is inference only, remove the superfluously created directories.
+    if inference_only:
+        remove_dir = pathlib.Path(jsonfile.parent.parent, latest_training_run(jsonfile.parent.parent))
+        remove_json = pathlib.Path(remove_dir, "config.json")
+        print(f"Removing unnecessarily created json file: {remove_json.absolute()}")
+        remove_json.unlink()
+        print(f"Removing unnecessarily created package directory: {remove_dir.absolute()}")
+        remove_dir.rmdir()
+    return config
+

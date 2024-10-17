@@ -30,54 +30,8 @@ import json
 
 from mpl_toolkits.axes_grid1 import ImageGrid
 
-from encoding_conv_vae.conv_vae import get_config, create_configured_vae_json, latest_model, latest_training_run
+from encoding_conv_vae.conv_vae import get_config, create_configured_vae_json, latest_model, latest_training_run, latest_json_and_model, get_conv_vae_config
 from .sensor_processing import AbstractSensorProcessing
-
-def latest_json_and_model(values):
-    """Returns the latest Conv-Vae path and model, taking the information from the values dict of the config"""
-    model_path = pathlib.Path(Config().values["conv_vae"]["model_dir"])
-    model_path = pathlib.Path(model_path, "models", Config().values["conv_vae"]["model_name"])
-    latest = latest_training_run(model_path)
-    # print(latest)
-    model_path = pathlib.Path(model_path, latest)
-    model = latest_model(model_path)
-    # The model from which we are starting        
-    resume_model = pathlib.Path(model_path, model)
-    jsonfile = pathlib.Path(model_path, "config.json")
-    print(f"resume_model and jsonfile are:\n\tresume_model={resume_model}\n\tjsonfile={jsonfile}")
-    return jsonfile, resume_model 
-
-def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
-    """Returns the configuration object of the Experiment-Conv-Vae"""
-    # As the code is highly dependent on the command line, emulating it here
-    args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default=None, type=str,
-                    help='config file path (default: None)')
-    args.add_argument('-r', '--resume', default=None, type=str,
-                    help='path to latest checkpoint (default: None)')
-    args.add_argument('-d', '--device', default=None, type=str,
-                    help='indices of GPUs to enable (default: all)')
-
-
-    # value = ["this-script", f"-c{file}", f"-r{model}"]
-    value = ["this-script", f"-c{jsonfile}", f"-r{resume_model}"]
-
-    # we are changing the parameters from here, to avoid changing the github downloaded package
-    savedargv = sys.argv
-    sys.argv = value
-    config = ConfigParser.from_args(args)
-    sys.argv = savedargv
-    print(json.dumps(config.config, indent=4))
-    # if it is inference only, remove the superfluously created directories.
-    if inference_only:
-        remove_dir = pathlib.Path(jsonfile.parent.parent, latest_training_run(jsonfile.parent.parent))
-        remove_json = pathlib.Path(remove_dir, "config.json")
-        print(f"Removing unnecessarily created json file: {remove_json.absolute()}")
-        remove_json.unlink()
-        print(f"Removing unnecessarily created package directory: {remove_dir.absolute()}")
-        remove_dir.rmdir()
-    return config
-
 
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
     """Sensor processing based on a pre-trained Conv-VAE"""
@@ -109,4 +63,19 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         self.loss_fn = getattr(module_loss, self.config['loss'])
         # metric_fns = [getattr(module_metric, met) for met in config['metrics']]
 
-       
+        # logger.info('Loading checkpoint: {} ...'.format(config.resume))
+
+        # loading on CPU-only machine
+        print("Loading the checkpoint")
+        self.checkpoint = torch.load(self.config.resume, map_location=torch.device('cpu'))
+        print("Checkpoint loaded")
+
+        self.state_dict = self.checkpoint['state_dict']
+        if self.config['n_gpu'] > 1:
+            self.model = torch.nn.DataParallel(self.model)
+        self.model.load_state_dict(self.state_dict)
+
+        # prepare model for testing
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = self.model.to(device)
+        self.model.eval()
