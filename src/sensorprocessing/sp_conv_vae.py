@@ -30,7 +30,8 @@ import json
 
 from mpl_toolkits.axes_grid1 import ImageGrid
 
-from encoding_conv_vae.conv_vae import get_config, create_configured_vae_json, latest_model, latest_training_run, latest_json_and_model, get_conv_vae_config
+from encoding_conv_vae.conv_vae import get_config, create_configured_vae_json, latest_model, latest_training_run, latest_json_and_model, get_conv_vae_config, load_image_to_tensor, get_transform
+
 from .sensor_processing import AbstractSensorProcessing
 
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
@@ -79,3 +80,11 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = self.model.to(device)
         self.model.eval()
+
+        self.transform = get_transform()
+
+    def process(self, sensor_readings):
+        """Let us assume that the sensor readings are in a file"""
+        input, image = load_image_to_tensor(sensor_readings, self.transform)
+        output, mu, logvar = self.model(input)
+        return mu
