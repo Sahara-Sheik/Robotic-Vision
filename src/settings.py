@@ -1,9 +1,8 @@
 """
-Intermediate stuff: I am going to convert this into using a yaml file
------------------ old text -----------------------
 This file contains settings for the VisionBasedRobotManipulator. These can be considered as constants for a particular run, but they might have different values on different computers or setups.
 
-Should access them through settings.NAME
+They should be accessed through Config().values["value"]
+
 """
 
 import socket

@@ -4,7 +4,6 @@ import settings
 from encoding_conv_vae.conv_vae import get_config, train
 
 
-
 def main():
     print("Learn a representation (the vision component)")
     config = get_config()

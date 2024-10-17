@@ -55,7 +55,7 @@ def get_config(vae_config_yaml):
 
 
 def train(config):
-    """Train the model"""
+    """Train the model with the parameters described from the configuration object. """
     # this would require a logger_config.json file
     # logger = config.get_logger('train')
     # let us just create a simple logger here
