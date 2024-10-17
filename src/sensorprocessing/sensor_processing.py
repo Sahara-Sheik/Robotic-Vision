@@ -1,6 +1,6 @@
 import sys
 sys.path.append("..")
-import settings
+from settings import Config
 
 import numpy as np
 
@@ -9,4 +9,4 @@ class AbstractSensorProcessing:
 
     def process(self, sensor_readings):
         """Processes the sensor input and returns the latent encoding, which is a vector of the size of the latent encoding"""
-        return np.zeros(settings.LATENT_ENCODING_SIZE)
+        return np.zeros(Config().values["robot"]["latent_encoding_size"])
