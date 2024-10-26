@@ -91,10 +91,11 @@ def main():
     # FIXME: robot address etc. must be moved to configuration
 
     # the robot position controller
-    robot_controller = PositionController(Config().values["robot"]["usb_port"]) 
+    robot_controller = PositionController(Config()["robot"]["usb_port"]) 
 
-    img_size = (256, 256) # was (128, 128)
-    camera_controller = CameraController(devices = Config().values["robot"]["active_camera_list"], img_size = img_size)
+    img_size = Config()["robot"]["saved_image_size"]
+    # (256, 256) # was (128, 128)
+    camera_controller = CameraController(devices = Config()["robot"]["active_camera_list"], img_size = img_size)
     camera_controller.visualize = True
     #cameratracker = None
     # the XBox controller - we are using the control loop from this one
