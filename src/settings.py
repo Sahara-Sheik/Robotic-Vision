@@ -1,11 +1,11 @@
 """
-This file contains settings for the VisionBasedRobotManipulator. These can be considered as constants for a particular run, but they might have different values on different computers or setups.
+This file contains settings for the BerryPicker project. These can be considered as constants for a particular run, but they might have different values on different computers or setups.
 
 They should be accessed through Config().values["value"]
 
 """
 
-import socket
+# import socket
 import yaml
 from pathlib import Path
 
@@ -17,7 +17,7 @@ class Config:
         if not cls._instance:
             cls._instance = super(Config, cls).__new__(cls)
             home_directory = Path.home()
-            main_config = Path(home_directory, ".config", "VisionBasedRobotManipulator","mainsettings.yaml")
+            main_config = Path(home_directory, ".config", "BerryPicker","mainsettings.yaml")
             if not main_config.exists():
                 raise Exception(f"Missing main config file: {main_config}")
             with main_config.open("rt") as handle:
