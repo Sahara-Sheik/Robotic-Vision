@@ -1,5 +1,7 @@
-# VisionBasedRobotManipulator
-Collecting demonstrations and perform policy learning for an inexpensive, vision driven robot.
+# BerryPicker
+This software package contains code for vision driven robot manipulation using an inexpensive robotic arm.
+
+The type of skills we aim to develop include (but are not limited to) agricultural manipulations such as picking fruits and berries, checking the ripeness of fruits, or detecting plant diseases. 
 
 The recommended way to organize this code is as follows:
 
