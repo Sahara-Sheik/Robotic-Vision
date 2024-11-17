@@ -159,6 +159,7 @@ def latest_json_and_model(values):
     print(f"resume_model and jsonfile are:\n\tresume_model={resume_model}\n\tjsonfile={jsonfile}")
     return jsonfile, resume_model 
 
+
 def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
     """Returns the configuration object of the Experiment-Conv-Vae"""
     # As the code is highly dependent on the command line, emulating it here
@@ -180,8 +181,13 @@ def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
     config = ConfigParser.from_args(args)
     sys.argv = savedargv
     print(json.dumps(config.config, indent=4))
+    #
+    # THIS was an attempt to fix some kind of weird bug where an empty 
+    # directory was created... it is not needed on 2024.11.17???
     # if it is inference only, remove the superfluously created directories.
-    if inference_only:
+    #
+    inffix = False
+    if inference_only and inffix:
         remove_dir = pathlib.Path(jsonfile.parent.parent, latest_training_run(jsonfile.parent.parent))
         remove_json = pathlib.Path(remove_dir, "config.json")
         print(f"Removing unnecessarily created json file: {remove_json.absolute()}")
@@ -203,7 +209,7 @@ def load_image_to_tensor(picture_file, transform):
     # transform, scale, convert to tensor
     image_tensor = transform(image_rgb)
     # Display some information about the image tensor
-    print(image_tensor.shape)  # e.g., torch.Size([3, H, W])
+    # print(image_tensor.shape)  # e.g., torch.Size([3, H, W])
     # Convert the tensor to a format suitable for matplotlib (from [C, H, W] to [H, W, C])
     image_tensor_for_pic = image_tensor.permute(1, 2, 0)
     #plt.imshow(image_tensor_for_pic)

@@ -43,16 +43,17 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         load the latest model, and use it to process
         """
         self.jsonfile, self.resume_model = latest_json_and_model(Config().values)
-        self.config = get_conv_vae_config(self.jsonfile, self.resume_model)
+        self.config = get_conv_vae_config(self.jsonfile, self.resume_model, inference_only=True)
 
-        self.data_loader = getattr(module_data, self.config['data_loader']['type'])(
-            self.config['data_loader']['args']['data_dir'],
-            batch_size=36,
-            shuffle=False,
-            validation_split=0.0,
+        # LOTZI: I don't think that we need the data loader here
+        #self.data_loader = getattr(module_data, self.config['data_loader']['type'])(
+        #    self.config['data_loader']['args']['data_dir'],
+        #    batch_size=36,
+        #    shuffle=False,
+        #    validation_split=0.0,
             # training=False,
-            num_workers=2
-        )
+        #    num_workers=2
+        #)
 
         # LOTZI: this is an uninitialized model architecture
         # build model architecture
@@ -85,6 +86,14 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
 
     def process(self, sensor_readings):
         """Let us assume that the sensor readings are in a file"""
-        input, image = load_image_to_tensor(sensor_readings, self.transform)
-        output, mu, logvar = self.model(input)
-        return mu
+        with torch.no_grad():
+            output, mu, logvar = self.model(sensor_readings)
+        mus = torch.squeeze(mu)
+        return mus.cpu().numpy()
+    
+    def process_file(self, sensor_readings_file):
+        sensor_readings, image = load_image_to_tensor(sensor_readings_file, self.transform)
+        output = self.process(sensor_readings)
+        return output
+        
+        
