@@ -20,6 +20,7 @@ class LSTMXYPredictor(nn.Module):
     """
     def __init__(self, latent_size, hidden_size, output_size, num_layers):
         super(LSTMXYPredictor, self).__init__()
+        self.state = None
         self.lstm = nn.LSTM(latent_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
 
