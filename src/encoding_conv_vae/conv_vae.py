@@ -196,30 +196,6 @@ def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
         remove_dir.rmdir()
     return config
 
-def load_image_to_tensor(picture_file, transform):
-    """Loads an image from a file and transforms it into a single 
-    element batch. Returns the batch and the image in a displayable format
-    """
-    # Load an image using PIL
-    image = Image.open(picture_file)
-    # print(image.mode)
-    # FIXME: if this is already RGB, this is not needed
-    # at least for the medical image, this is in 16 bit unsigned integer
-    image_rgb = image.convert("RGB")
-    # transform, scale, convert to tensor
-    image_tensor = transform(image_rgb)
-    # Display some information about the image tensor
-    # print(image_tensor.shape)  # e.g., torch.Size([3, H, W])
-    # Convert the tensor to a format suitable for matplotlib (from [C, H, W] to [H, W, C])
-    image_tensor_for_pic = image_tensor.permute(1, 2, 0)
-    #plt.imshow(image_tensor_for_pic)
-    # Add a batch dimension: shape becomes [1, 3, 224, 224]
-    image_batch = image_tensor.unsqueeze(0)
-
-    # Move tensor to GPU if available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    image_batch_device = image_batch.to(device)
-    return image_batch_device, image_tensor_for_pic
 
 def get_transform():
     """Gets a transform object that transforms a figure into the right size tensor"""

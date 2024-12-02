@@ -9,7 +9,7 @@ torch.manual_seed(1)
 from helper import ui_choose_task
 from gamepad.gamepad_controller import GamepadController
 from keyboard.keyboard_controller import KeyboardController
-from robot.al5d_position_controller import PositionController
+from robot.al5d_position_controller import PositionController, RobotPosition
 from camera.camera_controller import CameraController
 
 
@@ -59,23 +59,40 @@ def main():
         print("capture the image")
         camera_controller.update()
         image = camera_controller.images[lead_camera]
+        # FIXME: clean this up
+        imgbatch, _ = sp_conv_vae.load_capture_to_tensor(image, sp.transform)
         print("process the image")
-        z = sp.process(image)
+        z = sp.process(imgbatch)
         print(z)
         print("generate the action")
 
-        input = torch.from_numpy(z[i])
-        input = input.unsqueeze(0)
-        input = input.unsqueeze(0)
-        print(input)
-        a_pred = model.forward_keep_state(input)
+        inp = torch.from_numpy(z)
+        inp = inp.unsqueeze(0)
+        inp = inp.unsqueeze(0)
+        print(inp)
+        a_pred = model.forward_keep_state(inp)[0]
+
         print(f"a_pred: {a_pred}")
+        a_pos = RobotPosition()
+        a_pos.height = a_pred[0]
+        a_pos.distance = a_pred[1]
+        a_pos.heading = a_pred[2]
+        a_pos.wrist_angle = a_pred[3]
+        a_pos.wrist_rotation = a_pred[4]
+        a_pos.gripper = a_pred[5]
+
+        ok, a_pos = RobotPosition.limit(a_pos)
+        if not ok:
+            print("The proposed position was out of limit")
+
+        print(f"a_pos: {a_pos}")
+
         print("verify if the action is acceptable")
-        response = input(f"The action is {a_pred}. Is it acceptible? (y/n)")
+        response = input(f"The action is {a_pos}. Is it acceptable? (y/n)")
         if response == "y":
             print("Enact response")
             # FIXME: probably the action must be passsed on a different format
-            robot_controller.move(a_pred)
+            robot_controller.move(a_pos)
             print("FIXME: not implemented yet")
         else:
             print("Action not allowed, terminating")
