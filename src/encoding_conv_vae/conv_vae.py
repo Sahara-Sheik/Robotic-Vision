@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 # these imports are from the Conv-VAE-Torch package
 import data_loader.data_loaders as module_data
+from sensorprocessing.sp_helper import get_transform_to_robot
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
@@ -32,7 +33,6 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import argparse
 import logging
-#import socket
 
 
 
@@ -197,12 +197,3 @@ def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
     return config
 
 
-def get_transform():
-    """Gets a transform object that transforms a figure into the right size tensor"""
-    image_size = Config().values["robot"]["image_size"][0]
-    transform = transforms.Compose([
-        transforms.Resize(image_size),
-        transforms.CenterCrop(image_size),
-        transforms.ToTensor(),
-    ])
-    return transform

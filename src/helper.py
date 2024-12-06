@@ -15,6 +15,7 @@ def ui_choose_task(offer_task_creation = False):
     demos_dir = Path(data_dir, "demos")
     if demos_dir.exists():
         tasks = [item for item in demos_dir.iterdir() if item.is_dir()]
+        tasks = sorted(tasks, key=lambda x: x.name)
         print(f"Demo directory {demos_dir} found with tasks {tasks}")
     else:
         print(f"Demo directory {demos_dir} was not found.")
