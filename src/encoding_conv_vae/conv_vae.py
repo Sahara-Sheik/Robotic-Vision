@@ -106,9 +106,9 @@ def create_configured_vae_json():
     with open(json_template_path, 'r') as file:
         data = json.load(file)
 
-    data["name"] = Config().values["conv_vae"]["model_name"]
+    data["name"] = Config()["conv_vae"]["model_name"]
     data["data_loader"]["args"]["data_dir"] = Config().values["conv_vae"]["training_data_dir"]
-    data["trainer"]["save_dir"] = Config().values["conv_vae"]["model_dir"]
+    data["trainer"]["save_dir"] = Config()["conv_vae"]["model_dir"]
 
     print(data)
 

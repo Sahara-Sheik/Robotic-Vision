@@ -6,7 +6,7 @@ from settings import Config
 
 def get_demodir():
     """Returns the data directory associated with this project"""
-    demodir = Path(Config().values["demos"]["directory"])
+    demodir = Path(Config()["demos"]["directory"])
     demodir.mkdir(parents=True, exist_ok=True)
     return demodir
 
@@ -30,6 +30,7 @@ def ui_choose_task(offer_task_creation = False):
         tasks_dict[i] = t
     for key in tasks_dict:
         print(f"\t{key}: {tasks_dict[key].name}")
+    sys.stdout.flush()
     task_id = int(input("Choose the task: "))
     task_dir = tasks_dict[task_id]
     print(f"You chose task: {task_dir.name}")
@@ -44,6 +45,7 @@ def ui_choose_demo(task_dir):
         demos_dict[i] = t
     for key in demos_dict:
         print(f"\t{key}: {demos_dict[key].name}")
+    sys.stdout.flush()
     demo_id = int(input("Choose the demonstration: "))
     demo_dir = demos_dict[demo_id]
     print(f"You chose demonstration: {demo_dir.name}")
