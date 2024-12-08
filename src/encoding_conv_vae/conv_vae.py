@@ -1,3 +1,8 @@
+"""
+conv_vae.py
+
+Helper functions for calling the Julian-8897-Conv-VAE-PyTorch ConvVAE implementation. As that implementation is heavily reliant on json file input and command line, we are generating the json here from our own code. 
+"""
 
 import sys
 sys.path.append("..")
@@ -57,7 +62,9 @@ def get_config(vae_config_yaml):
 
 
 def train(config):
-    """Train the model with the parameters described from the configuration object. """
+    """Train the model with the parameters described from the configuration object. Returns the trainer object, which then can be queried for the final metrics.
+    
+    """
     # this would require a logger_config.json file
     # logger = config.get_logger('train')
     # let us just create a simple logger here
@@ -94,8 +101,9 @@ def train(config):
                       data_loader=data_loader,
                       valid_data_loader=None,
                       lr_scheduler=lr_scheduler)
-
     trainer.train()
+    # return the trainer, as the metrics might be useful
+    return trainer
 
 
 def create_configured_vae_json():
@@ -147,8 +155,8 @@ def latest_training_run(model_path):
 
 def latest_json_and_model(values):
     """Returns the latest Conv-Vae path and model, taking the information from the values dict of the config"""
-    model_path = pathlib.Path(Config().values["conv_vae"]["model_dir"])
-    model_path = pathlib.Path(model_path, "models", Config().values["conv_vae"]["model_name"])
+    model_dir = pathlib.Path(Config()["conv_vae"]["model_dir"])
+    model_path = pathlib.Path(model_dir, "models", Config()["conv_vae"]["model_name"])
     latest = latest_training_run(model_path)
     # print(latest)
     model_path = pathlib.Path(model_path, latest)
