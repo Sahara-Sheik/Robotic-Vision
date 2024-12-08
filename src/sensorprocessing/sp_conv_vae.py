@@ -42,11 +42,34 @@ from .sp_helper import load_picturefile_to_tensor
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
     """Sensor processing based on a pre-trained Conv-VAE"""
 
-    def __init__(self):
+    def __init__(self, conv_vae_jsonfile, resume_model_pthfile):
+        """Restore a pre-trained model based on the configuration json file and the model file"""
+        self.conv_vae_jsonfile = conv_vae_jsonfile
+        self.resume_model_pthfile = resume_model_pthfile
+        self.vae_config = get_conv_vae_config(
+            self.conv_vae_jsonfile, 
+            self.resume_model_pthfile, 
+            inference_only=True)
+        # build model architecture
+        self.model = self.vae_config.init_obj('arch', module_arch)
+        self.loss_fn = getattr(module_loss, self.vae_config['loss'])
+        # loading the checkpoint
+        self.checkpoint = torch.load(self.vae_config.resume, map_location=torch.device('cpu'))
+        self.state_dict = self.checkpoint['state_dict']
+        self.model.load_state_dict(self.state_dict)
+        # prepare model for testing
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = self.model.to(device)
+        self.model.eval()
+        self.transform = get_transform_to_robot()
+
+
+    def __init__old(self):
         """
         TODO: Once it is cleaned up, transfer this code back to encoding-conv-vae and use it in Experiment-Conv-Vae as well to
         load the latest model, and use it to process
         """
+        # FIXME: in the Experiment-CONV-VAE use these... 
         self.jsonfile, self.resume_model = latest_json_and_model(Config().values)
         self.config = get_conv_vae_config(self.jsonfile, self.resume_model, inference_only=True)
         # build model architecture
@@ -70,7 +93,6 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = self.model.to(device)
         self.model.eval()
-
         self.transform = get_transform_to_robot()
 
     def process(self, sensor_readings):

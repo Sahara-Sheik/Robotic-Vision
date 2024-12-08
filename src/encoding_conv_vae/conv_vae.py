@@ -130,7 +130,7 @@ def create_configured_vae_json():
     return json_temporary_path
 
 def latest_model(run_path):
-    """Returns the filename of the latest checkpoint from the training_run path"""
+    """Returns the filename of the latest checkpoint from the training_run path or none if there is no such model"""
     models = run_path.glob("*.pth")
     highest = -1
     model = None
@@ -153,7 +153,7 @@ def latest_training_run(model_path):
     return latest
 
 
-def latest_json_and_model(values):
+def latest_json_and_model():
     """Returns the latest Conv-Vae path and model, taking the information from the values dict of the config"""
     model_dir = pathlib.Path(Config()["conv_vae"]["model_dir"])
     model_path = pathlib.Path(model_dir, "models", Config()["conv_vae"]["model_name"])
@@ -161,6 +161,9 @@ def latest_json_and_model(values):
     # print(latest)
     model_path = pathlib.Path(model_path, latest)
     model = latest_model(model_path)
+    if model is None:
+        print(f"latest_json_and_model: there is no model in path:\n {model_path}\n Likely a spuriously created directory that needs to be removed.")
+        return None, None
     # The model from which we are starting        
     resume_model = pathlib.Path(model_path, model)
     jsonfile = pathlib.Path(model_path, "config.json")
@@ -188,7 +191,7 @@ def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
     sys.argv = value
     config = ConfigParser.from_args(args)
     sys.argv = savedargv
-    print(json.dumps(config.config, indent=4))
+    # print(json.dumps(config.config, indent=4))
     #
     # THIS was an attempt to fix some kind of weird bug where an empty 
     # directory was created... it is not needed on 2024.11.17???
