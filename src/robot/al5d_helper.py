@@ -20,7 +20,7 @@ class RobotHelper:
         return value, constrained
 
     @staticmethod
-    def map_ranges(value, min1, max1, min2, max2):
+    def map_ranges(value, min1, max1, min2 = 0, max2 = 1):
         """Map a 0-1 from the range [min1, max1] to [min2, max2]"""
         value = ((value - min1) * (max2 - min2) / (max1 - min1) + min2)
         return (value)

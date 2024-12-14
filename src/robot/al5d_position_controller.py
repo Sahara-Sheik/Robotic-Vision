@@ -82,6 +82,34 @@ class RobotPosition:
         retval.gripper = value["gripper"]
         return retval 
 
+    def to_normalized_vector(self):
+        retval = [0,0,0,0,0,0]
+        # 0 height
+        retval[0] = RobotHelper.map_ranges(self.height, 
+                                           al5d_constants.POSITION_HEIGHT_MIN, al5d_constants.POSITION_HEIGHT_MAX)
+        # 1 distance
+        retval[1] = RobotHelper.map_ranges(self.distance, 
+                                           al5d_constants.POSITION_DISTANCE_MIN, 
+                                           al5d_constants.POSITION_DISTANCE_MAX)
+        # 2 heading
+        retval[2] = RobotHelper.map_ranges(self.heading, 
+                                           al5d_constants.POSITION_HEADING_MIN, 
+                                           al5d_constants.POSITION_HEADING_MAX)
+        # 3 wrist_angle
+        retval[3] = RobotHelper.map_ranges(self.wrist_angle, 
+                                           al5d_constants.POSITION_WRIST_ANGLE_MIN, 
+                                           al5d_constants.POSITION_WRIST_ANGLE_MAX)
+        # 4 wrist_rotation
+        retval[4] = RobotHelper.map_ranges(self.wrist_rotation, 
+                                           al5d_constants.POSITION_WRIST_ROTATION_MIN, 
+                                           al5d_constants.POSITION_WRIST_ROTATION_MAX
+        )
+        # 5 gripper
+        retval[5] = RobotHelper.map_ranges(self.gripper,
+                                           al5d_constants.POSITION_GRIPPER_MIN,al5d_constants.POSITION_GRIPPER_MAX)
+        return retval
+
+
     def __str__(self):
         return f"Position: h={self.height:.2} dist={self.distance:.2} rot={self.heading:.2f} wa={self.wrist_angle:.2f} wrot={self.wrist_rotation:.2f} gripper={self.gripper:.2f}" 
 
@@ -169,7 +197,3 @@ class PositionController:
         self.angle_controller.control_angles(angles, target.gripper)
         self.pos = target
 
-    def safetycheck():    
-        #print(f"shoulder={angle_shoulder}, elbow={angle_elbow}, wrist={angle_wrist}")
-        #ans = input("Enact it? (y/N/X)")
-        pass
