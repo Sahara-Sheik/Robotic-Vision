@@ -83,6 +83,7 @@ class RobotPosition:
         return retval 
 
     def to_normalized_vector(self):
+        """Converts the positions to a normalized vector"""
         retval = [0,0,0,0,0,0]
         # 0 height
         retval[0] = RobotHelper.map_ranges(self.height, 
@@ -108,6 +109,46 @@ class RobotPosition:
         retval[5] = RobotHelper.map_ranges(self.gripper,
                                            al5d_constants.POSITION_GRIPPER_MIN,al5d_constants.POSITION_GRIPPER_MAX)
         return retval
+
+
+    @staticmethod
+    def from_normalized_vector(values):
+        """Creates the rp from a normalized vector"""
+        rp = RobotPosition()
+        # 0 height
+        rp.height = RobotHelper.map_ranges(values[0], 0.0, 1.0, 
+                                           al5d_constants.POSITION_HEIGHT_MIN, al5d_constants.POSITION_HEIGHT_MAX)
+        # 1 distance
+        rp.distance = RobotHelper.map_ranges(values[1], 0.0, 1.0,  
+                                           al5d_constants.POSITION_DISTANCE_MIN, 
+                                           al5d_constants.POSITION_DISTANCE_MAX)
+        # 2 heading
+        rp.heading = RobotHelper.map_ranges(values[2], 0.0, 1.0, 
+                                           al5d_constants.POSITION_HEADING_MIN, 
+                                           al5d_constants.POSITION_HEADING_MAX)
+        # 3 wrist_angle
+        rp.wrist_angle = RobotHelper.map_ranges(values[3], 0.0, 1.0, 
+                                           al5d_constants.POSITION_WRIST_ANGLE_MIN, 
+                                           al5d_constants.POSITION_WRIST_ANGLE_MAX)
+        # 4 wrist_rotation
+        rp.wrist_rotation = RobotHelper.map_ranges(values[4], 0.0, 1.0,  
+                                           al5d_constants.POSITION_WRIST_ROTATION_MIN, 
+                                           al5d_constants.POSITION_WRIST_ROTATION_MAX
+        )
+        # 5 gripper
+        rp.gripper = RobotHelper.map_ranges(values[5], 0.0, 1.0, 
+                                           al5d_constants.POSITION_GRIPPER_MIN,al5d_constants.POSITION_GRIPPER_MAX)
+        return rp
+
+
+    def empirical_distance(self, other):
+        """A weighted distance function between two robot positions"""
+        w = np.ones([6]) / 6.0
+        norm1 = np.array(self.to_normalized_vector())
+        norm2 = np.array(other.to_normalized_vector())
+        val = np.inner(w, np.abs(norm1 - norm2))
+        return val
+
 
 
     def __str__(self):
