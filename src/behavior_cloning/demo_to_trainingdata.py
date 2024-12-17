@@ -73,7 +73,7 @@ class BCDemonstration:
             self.trim_to = self.maxsteps
 
     def read_z_a(self):
-        """Reads in the demonstrations for z and a"""
+        """Reads in the demonstrations for z and a and returns them in the form of float32 numpy arrays"""
         z = []
         a = []
         for i in range(self.trim_from, self.trim_to):

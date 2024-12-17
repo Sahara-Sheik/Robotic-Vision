@@ -84,7 +84,7 @@ class RobotPosition:
 
     def to_normalized_vector(self):
         """Converts the positions to a normalized vector"""
-        retval = [0,0,0,0,0,0]
+        retval = np.zeros(6, dtype = np.float32)
         # 0 height
         retval[0] = RobotHelper.map_ranges(self.height, 
                                            al5d_constants.POSITION_HEIGHT_MIN, al5d_constants.POSITION_HEIGHT_MAX)
@@ -113,7 +113,7 @@ class RobotPosition:
 
     @staticmethod
     def from_normalized_vector(values):
-        """Creates the rp from a normalized vector"""
+        """Creates the rp from a normalized numpy vector"""
         rp = RobotPosition()
         # 0 height
         rp.height = RobotHelper.map_ranges(values[0], 0.0, 1.0, 
@@ -140,6 +140,23 @@ class RobotPosition:
                                            al5d_constants.POSITION_GRIPPER_MIN,al5d_constants.POSITION_GRIPPER_MAX)
         return rp
 
+    @staticmethod
+    def from_vector(values):
+        """Creates a RobotPosition from a numpy vector"""
+        rp = RobotPosition()
+        # 0 height
+        rp.height = values[0]
+        # 1 distance
+        rp.distance = values[1]
+        # 2 heading
+        rp.heading = values[2]
+        # 3 wrist_angle
+        rp.wrist_angle = values[3]
+        # 4 wrist_rotation
+        rp.wrist_rotation = values[4]
+        # 5 gripper
+        rp.gripper = values[5]
+        return rp
 
     def empirical_distance(self, other):
         """A weighted distance function between two robot positions"""

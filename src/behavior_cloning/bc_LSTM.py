@@ -16,7 +16,9 @@ import torch.nn as nn
 
 class LSTMXYPredictor(nn.Module):
     """
-    This is the architecture created by chatgpt
+    This is the architecture created by chatgpt. 
+    Uses an input of the size of the latent encoding and the output of the size of the action space (normally 6).
+    The output is 
     """
     def __init__(self, latent_size, hidden_size, output_size, num_layers):
         super(LSTMXYPredictor, self).__init__()

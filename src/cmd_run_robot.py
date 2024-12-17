@@ -40,7 +40,7 @@ def main():
     sp = sp_conv_vae.ConvVaeSensorProcessing()
 
     print("...Initialize and load the controller (behavior cloning)")
-
+    # this should load a particular specification of the robot architecture...
     # Original
     latent_size = Config()["robot"]["latent_encoding_size"]  
     hidden_size = 32  # degrees of freedom in the robot
@@ -71,29 +71,22 @@ def main():
         inp = inp.unsqueeze(0)
         print(inp)
         a_pred = model.forward_keep_state(inp)[0]
-
         print(f"a_pred: {a_pred}")
-        a_pos = RobotPosition()
-        a_pos.height = a_pred[0]
-        a_pos.distance = a_pred[1]
-        a_pos.heading = a_pred[2]
-        a_pos.wrist_angle = a_pred[3]
-        a_pos.wrist_rotation = a_pred[4]
-        a_pos.gripper = a_pred[5]
-
+        a_pos = RobotPosition.from_normalized_vector(a_pred)
+        # Safety 1: limit
         ok, a_pos = RobotPosition.limit(a_pos)
         if not ok:
-            print("The proposed position was out of limit")
-
-        print(f"a_pos: {a_pos}")
-
+            print(f"The proposed position was out of limit, fixed. \nNew value a_pos: {a_pos}")
+        # Safety 2: empirical distance
+        oldpos = robot_controller.get_position()
+        dist = a_pos.empirical_distance(oldpos)
+        if dist > 0.4:
+            print(f"Empirical distance too large!")
         print("verify if the action is acceptable")
-        response = input(f"The action is {a_pos}. Is it acceptable? (y/n)")
+        response = input(f"The proposed action is {a_pos}.\n This is {dist} away from the current position.\nProceed? (y/n)")
         if response == "y":
             print("Enact response")
-            # FIXME: probably the action must be passsed on a different format
             robot_controller.move(a_pos)
-            print("FIXME: not implemented yet")
         else:
             print("Action not allowed, terminating")
             break
