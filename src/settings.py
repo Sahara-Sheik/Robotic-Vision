@@ -65,4 +65,5 @@ class Config:
         with experiment_sys_dep.open("rt") as handle:
             dep_config = yaml.safe_load(handle)
         exp_config = indep_config | dep_config
+        print(f"Configuration for experiment: {name} successfully loaded", flush=True)
         return exp_config
