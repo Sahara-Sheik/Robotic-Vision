@@ -1,0 +1,5 @@
+
+proprioception_training_task: 'proprioception-cluttered'
+proprioception_testing_task: 'proprioception-uncluttered'
+# The number of epochs the MLP is supposed to be trained
+epochs: 1000

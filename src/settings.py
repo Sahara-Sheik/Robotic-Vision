@@ -47,23 +47,47 @@ class Config:
     def __getitem__(self, key):
         return self.values[key]
     
-    def get_experiment(self, name):
+    def get_experiment(self, group_name, run_name):
         """Returns an experiment configuration, which is the 
         mixture between the system-dependent configuration and the system independent configuration."""
-        # Load the system independent configuration
         current_directory = Path(__file__).resolve().parent
-        experiment_sys_indep = Path(current_directory, "experiment_configs", name + ".yaml")
-        if not experiment_sys_indep.exists():
-            raise Exception(f"Missing experiment system independent config file {experiment_sys_indep}")
-        with experiment_sys_indep.open("rt") as handle:
+        #
+        # Load the system independent group configuration
+        #
+        experiment_group_indep = Path(current_directory, "experiment_configs", group_name, "_" + group_name + ".yaml")
+        if not experiment_group_indep.exists():
+            raise Exception(f"Missing experiment group config {experiment_group_indep}")
+        with experiment_group_indep.open("rt") as handle:
+            group_config = yaml.safe_load(handle)
+        
+        group_config["group_name"] = group_name
+        #
+        # Load the system independent run configuration
+        #
+        experiment_run_indep = Path(current_directory, "experiment_configs", group_name, run_name + ".yaml")
+        if not experiment_run_indep.exists():
+            raise Exception(f"Missing experiment system independent config file {experiment_run_indep}")
+        with experiment_run_indep.open("rt") as handle:
             indep_config = yaml.safe_load(handle)
+        indep_config["run_name"] = run_name
+        indep_config = group_config | indep_config
+        # create the data dir
+        data_dir = Path(self.values["experiment_data"], group_name, run_name)
+        data_dir.mkdir(exist_ok=True, parents=True)
+        indep_config["data_dir"] = data_dir
+        #
         # Load the system dependent configuration
+        #
         experiment_directory = Path(self.values["experiment_system_dependent_dir"])
-        experiment_sys_dep = Path(experiment_directory, name + "_sysdep.yaml")
+        experiment_sys_dep = Path(experiment_directory, group_name, run_name + "_sysdep.yaml")
         if not experiment_sys_dep.exists():
-            raise Exception(f"Missing experiment system dependent config file {experiment_sys_dep}")
-        with experiment_sys_dep.open("rt") as handle:
-            dep_config = yaml.safe_load(handle)
-        exp_config = indep_config | dep_config
-        print(f"Configuration for experiment: {name} successfully loaded", flush=True)
+            print(f"Missing experiment system dependent config file {experiment_sys_dep}, that is ok, proceeding.")
+            exp_config = indep_config
+        else: 
+            with experiment_sys_dep.open("rt") as handle:
+                dep_config = yaml.safe_load(handle)
+            exp_config = indep_config | dep_config
+
+        print(f"Configuration for experiment: {group_name}/{run_name} successfully loaded", flush=True)
+
         return exp_config
