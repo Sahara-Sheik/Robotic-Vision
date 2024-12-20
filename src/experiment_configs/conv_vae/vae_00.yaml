@@ -1,0 +1,4 @@
+# just write something here, such that there is a dictionary when loaded 
+dummy: "dummy"
+model_subdir: '1220_172927'
+model_checkpoint: 'checkpoint-epoch100.pth'

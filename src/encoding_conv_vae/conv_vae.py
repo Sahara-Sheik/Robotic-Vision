@@ -11,7 +11,7 @@ from settings import Config
 import argparse
 import json
 import re
-import pathlib
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -41,7 +41,7 @@ import logging
 
 
 
-def get_config(vae_config_yaml): 
+def get_conv_vae_config(vae_config_yaml): 
     """Creates the configuration object of the conv-vae package. It is doing this by emulating the command line, but essentially most of the information is in a json file."""
     # FIXME: pytorch template??? this is probably some bogus stuff
     args = argparse.ArgumentParser(description='PyTorch Template')
@@ -106,22 +106,36 @@ def train(config):
     return trainer
 
 
-def create_configured_vae_json():
-    """As the Conv-VAE codebase is using a json file to set the configuration, this code takes a template json, modifies the values based on our own configuration in settings.Config and sets writes it out into a json file again. The new json file is called "conv-vae-configured.json and it goes into the root of the model directory"""
-    json_template_path = Config().values["conv_vae"]["json_template"]
+def create_configured_vae_json(exp):
+    """As the Conv-VAE codebase is using a json file to set the configuration, this code takes a template json, modifies the values based on our own configuration in settings.Config and sets writes it out into a json file again. The new json file is called "conv-vae-configured.json and it goes into the root of the model directory
+    """
+
+    # FIXME: the template should come from the exp
+    current_directory = Path(__file__).resolve().parent
+    json_template_path = Path(current_directory, exp["json_template_name"])
+    # "encoding_conv_vae/conv-vae-config-default.json"
+    # json_template_path = Config().values["conv_vae"]["json_template"]
     print(json_template_path)
 
     with open(json_template_path, 'r') as file:
         data = json.load(file)
 
-    data["name"] = Config()["conv_vae"]["model_name"]
-    data["data_loader"]["args"]["data_dir"] = Config().values["conv_vae"]["training_data_dir"]
-    data["trainer"]["save_dir"] = Config()["conv_vae"]["model_dir"]
+    data["name"] = exp["model_name"]
+    data["data_loader"]["args"]["data_dir"] = str(
+        Path(exp["data_dir"],exp["training_data_dir"]))
+    
+    # Config().values["conv_vae"]["training_data_dir"]
+    model_dir = Path(exp["data_dir"],exp["model_dir"])
+    model_dir.mkdir(parents=True, exist_ok=True)
+    data["trainer"]["save_dir"] = str(model_dir)
+    # Config()["conv_vae"]["model_dir"]
 
     print(data)
 
     # the temporary json file: above the models in conv-vae-temp.json
-    json_temporary_path = pathlib.Path(Config().values["conv_vae"]["model_dir"], "conv-vae-configured.json")
+    #json_temporary_path = Path(Config().values["conv_vae"]["model_dir"], "conv-vae-configured.json")
+    json_temporary_path = Path(
+        exp["data_dir"], exp["model_dir"], "conv-vae-configured.json")
 
     # Open a file in write mode
     with open(json_temporary_path, 'w') as file:
@@ -154,24 +168,25 @@ def latest_training_run(model_path):
 
 
 def latest_json_and_model():
-    """Returns the latest Conv-Vae path and model, taking the information from the values dict of the config"""
-    model_dir = pathlib.Path(Config()["conv_vae"]["model_dir"])
-    model_path = pathlib.Path(model_dir, "models", Config()["conv_vae"]["model_name"])
+    """Returns the latest Conv-Vae path and model, taking the information from the values dict of the config
+    FIXME: this needs to be converted to exp"""
+    model_dir = Path(Config()["conv_vae"]["model_dir"])
+    model_path = Path(model_dir, "models", Config()["conv_vae"]["model_name"])
     latest = latest_training_run(model_path)
     # print(latest)
-    model_path = pathlib.Path(model_path, latest)
+    model_path = Path(model_path, latest)
     model = latest_model(model_path)
     if model is None:
         print(f"latest_json_and_model: there is no model in path:\n {model_path}\n Likely a spuriously created directory that needs to be removed.")
         return None, None
     # The model from which we are starting        
-    resume_model = pathlib.Path(model_path, model)
-    jsonfile = pathlib.Path(model_path, "config.json")
+    resume_model = Path(model_path, model)
+    jsonfile = Path(model_path, "config.json")
     print(f"resume_model and jsonfile are:\n\tresume_model={resume_model}\n\tjsonfile={jsonfile}")
     return jsonfile, resume_model 
 
 
-def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
+def get_conv_vae_config(jsonfile, resume_model = None, inference_only = True):
     """Returns the configuration object of the Experiment-Conv-Vae"""
     # As the code is highly dependent on the command line, emulating it here
     args = argparse.ArgumentParser(description='PyTorch Template')
@@ -184,7 +199,10 @@ def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
 
 
     # value = ["this-script", f"-c{file}", f"-r{model}"]
-    value = ["this-script", f"-c{jsonfile}", f"-r{resume_model}"]
+    if resume_model is None:
+        value = ["this-script", f"-c{jsonfile}"]
+    else:
+        value = ["this-script", f"-c{jsonfile}", f"-r{resume_model}"]
 
     # we are changing the parameters from here, to avoid changing the github downloaded package
     savedargv = sys.argv
@@ -199,8 +217,8 @@ def get_conv_vae_config(jsonfile, resume_model, inference_only = True):
     #
     inffix = False
     if inference_only and inffix:
-        remove_dir = pathlib.Path(jsonfile.parent.parent, latest_training_run(jsonfile.parent.parent))
-        remove_json = pathlib.Path(remove_dir, "config.json")
+        remove_dir = Path(jsonfile.parent.parent, latest_training_run(jsonfile.parent.parent))
+        remove_json = Path(remove_dir, "config.json")
         print(f"Removing unnecessarily created json file: {remove_json.absolute()}")
         remove_json.unlink()
         print(f"Removing unnecessarily created package directory: {remove_dir.absolute()}")
