@@ -101,8 +101,10 @@ def main():
     # the XBox controller - we are using the control loop from this one
     controller = "xbox"
     if controller == "xbox":
-        gamepad_controller = GamepadController(robot_controller=robot_controller, camera_controller=camera_controller)
-        demo_recorder = DemonstrationRecorder(camera_controller=camera_controller, controller=gamepad_controller, robot_controller=
+        gamepad_controller = GamepadController(
+            robot_controller=robot_controller, camera_controller=camera_controller)
+        demo_recorder = DemonstrationRecorder(
+            camera_controller=camera_controller, controller=gamepad_controller, robot_controller=
                                     robot_controller, save_dir=demo_dir, task_name=task_dir.name)
         # dr = None
         gamepad_controller.demonstration_recorder = demo_recorder
@@ -116,7 +118,8 @@ def main():
         kb_controller.demonstration_recorder = demo_recorder
         kb_controller.control()
         print("====== Demonstration terminated and recorded successfully, bye. ======")
-
+    if controller == "program":
+        program_controller = 
 
 
 if __name__ == "__main__":
