@@ -28,7 +28,7 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import argparse
 #import socket
-#import pathlib
+from pathlib import Path
 #import json
 
 from mpl_toolkits.axes_grid1 import ImageGrid
@@ -38,6 +38,25 @@ from encoding_conv_vae.conv_vae import get_conv_vae_config, create_configured_va
 from .sensor_processing import AbstractSensorProcessing
 from .sp_helper import load_picturefile_to_tensor
 
+
+def get_sp_of_conv_vae_experiment(run):
+    """
+    Gets the sensorprocessor of a conv vae experiment
+    """
+    exp = Config().get_experiment("conv_vae", run)
+    model_subdir = Path(exp["data_dir"], exp["model_dir"], "models", exp["model_name"], exp["model_subdir"])
+    conv_vae_jsonfile = Path(model_subdir, "config.json")
+    resume_model_pthfile = Path(model_subdir, exp["model_checkpoint"])
+    print(conv_vae_jsonfile)
+    if conv_vae_jsonfile.exists():
+        print("Exists!")
+    print(resume_model_pthfile)
+    sp = ConvVaeSensorProcessing(conv_vae_jsonfile, resume_model_pthfile)
+    print(sp.model)
+    print(sp.model.encoder)
+    print(f"latent_dim {sp.model.latent_dim}")
+    # print(model.hidden_dims)
+    return sp
 
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
     """Sensor processing based on a pre-trained Conv-VAE"""

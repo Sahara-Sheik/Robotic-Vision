@@ -124,6 +124,11 @@ def create_configured_vae_json(exp):
     data["data_loader"]["args"]["data_dir"] = str(
         Path(exp["data_dir"],exp["training_data_dir"]))
     
+    # update the vae_config based on parameters from the experiment
+    data["trainer"]["epochs"] = exp["epochs"] # was 100
+    data["trainer"]["save_period"] = exp["save_period"] # 5
+    data["arch"]["args"]["latent_dims"] = exp["latent_dims"]
+
     # Config().values["conv_vae"]["training_data_dir"]
     model_dir = Path(exp["data_dir"],exp["model_dir"])
     model_dir.mkdir(parents=True, exist_ok=True)
