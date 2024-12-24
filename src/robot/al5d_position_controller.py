@@ -164,9 +164,7 @@ class RobotPosition:
         norm1 = np.array(self.to_normalized_vector())
         norm2 = np.array(other.to_normalized_vector())
         val = np.inner(w, np.abs(norm1 - norm2))
-        return val
-
-
+        return val    
 
     def __str__(self):
         return f"Position: h={self.height:.2} dist={self.distance:.2} rot={self.heading:.2f} wa={self.wrist_angle:.2f} wrot={self.wrist_rotation:.2f} gripper={self.gripper:.2f}" 

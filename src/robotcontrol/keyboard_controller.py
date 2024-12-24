@@ -101,9 +101,9 @@ class KeyboardController(AbstractController):
         # wrist rotation: left-right
         delta_wrist_rotation = 0
         if keycode == 81: # left --> wrist-rotate-left
-            delta_wrist_rotation = self.v_wrist_rotator * self.last_interval 
+            delta_wrist_rotation = self.v_wrist_rotation * self.last_interval 
         if keycode == 83: # right --> write-rotate-right
-            delta_wrist_rotation = - self.v_wrist_rotator * self.last_interval 
+            delta_wrist_rotation = - self.v_wrist_rotation * self.last_interval 
 
         # gripper open-close: right alt / shift 226 / 234
         delta_gripper = 0

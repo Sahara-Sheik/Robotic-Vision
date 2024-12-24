@@ -3,8 +3,6 @@ program_controller.py
 
 Preprogrammed controller for the AL5D robot
 """
-
-
 from robot.al5d_position_controller import RobotPosition, PositionController
 from .abstract_controller import AbstractController
 
@@ -16,6 +14,38 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
+
+def move_towards(current, target, max_velocity):
+    if abs(target - current) <= max_velocity:
+        # If the distance to the target is less than the max velocity, snap to target
+        return target
+    elif target > current:
+        # Move up towards the target
+        return current + max_velocity
+    else:
+        # Move down towards the target
+        return current - max_velocity
+
+def move_position_towards(current: RobotPosition, 
+    target: RobotPosition, ctrl):
+    """Move a position towards the target with specific velocities"""
+    rv = RobotPosition()
+    rv.height = move_towards(current.height, target.height, 
+                             ctrl.v_height * ctrl.robot_interval)
+    rv.distance = move_towards(current.distance, target.distance, 
+                               ctrl.v_distance * ctrl.robot_interval)
+    rv.heading = move_towards(current.heading, target.heading, 
+                             ctrl.v_heading * ctrl.robot_interval)
+    rv.wrist_angle = move_towards(current.wrist_angle, target.wrist_angle, 
+                                  ctrl.v_wrist_angle * ctrl.robot_interval)
+    rv.wrist_rotation = move_towards(current.wrist_rotation, 
+                                     target.wrist_rotation, 
+                                     ctrl.v_wrist_rotation * ctrl.robot_interval)
+    rv.gripper = move_towards(current.gripper, target.gripper,
+                              ctrl.v_gripper * ctrl.robot_interval)
+    return rv
+
+
 class ProgramController(AbstractController):
     """A programmed robot controller that works by reaching a set of waypoints with the robot. """
 
@@ -26,30 +56,24 @@ class ProgramController(AbstractController):
         """Sets the waypoints the robot needs to as list of positions"""
         self.waypoints = waypoints
 
-    # FIXME: implement this
-
-    def move_towards(current_height, target, max_velocity):
-        if abs(target - current_height) <= max_velocity:
-            # If the distance to the target is less than the max velocity, snap to target
-            return target
-        elif target > current_height:
-            # Move up towards the target
-            return current_height + max_velocity
-        else:
-            # Move down towards the target
-            return current_height - max_velocity
-
-    def move_to_waypoint(self):
-        """FIXME: move towards the current waypoint with the specified speeds"""
-        current = self.pos_target
-        current_target = self.waypoints[0]
-        # if we reached the one...
-        if current.empirical_distance(waypoint[0]) > 0.1:
-            return True, self.pos_target
-        ## FIXME: do this for all
-        target.height = current.height + (target.hei)
-
-    # END FIXME implement this
+    def next_pos(self):
+        """Gets the next position in the path into pos_target"""
+        if self.waypoints is None or self.waypoints == []:
+            return None
+        wp = self.waypoints[0]
+        dist = self.pos_current.empirical_distance(wp)
+        # print(f"wp {wp}")
+        # print(f"Distance to wp {dist}")
+        if self.pos_current.empirical_distance(wp) <= 0.001:
+            # current waypoint was reached get next
+            del self.waypoints[0]
+            if self.waypoints == []:
+                print("Finished waypoints")
+                return None
+            wp = self.waypoints[0]
+            print(f"New waypoint: {wp}")
+        self.pos_target = move_position_towards(self.pos_current, wp, self)
+        return self.pos_target
 
     def control(self):
         """The main control loop"""
@@ -61,9 +85,13 @@ class ProgramController(AbstractController):
             if self.exit_control:
                 self.stop()
                 break;            
-            # FIXME: the main step here has to be the setting of the next position. Basically we have to check whether we reached the next waypoint:
-            reached, self.pos_target = self.move_to_waypoint()
+            # reached, self.pos_target = self.move_to_waypoint()
+            if self.next_pos() is None:
+                self.stop()
+                break
             self.control_robot()
+            # maybe the current is not done:
+            self.pos_current = self.pos_target
             self.update()
             end_time = time.time() 
             execution_time = end_time - start_time 

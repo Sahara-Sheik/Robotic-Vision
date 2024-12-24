@@ -1,7 +1,16 @@
+"""
+abstract_controller.py
+
+Abstract based class for the controller for the AL5D robot
+"""
 from abc import ABC, abstractmethod
 from copy import copy
 
 from robot.al5d_position_controller import RobotPosition, PositionController
+
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class AbstractController:
     """An abstract class representing the ancestor of all classes that are used to perform high-level control the robot. Most of the classes here are something like remote control"""
@@ -28,7 +37,7 @@ class AbstractController:
         self.v_heading = 15.0 # angle degree / second
         self.v_gripper = 50.0 # percentage / second
         self.v_wrist_angle = 15.0 # angle degree / second
-        self.v_wrist_rotator = 0.1 # angle degree / second
+        self.v_wrist_rotation = 0.1 # angle degree / second
         self.camera_controller = camera_controller
         self.demonstration_recorder = demonstration_recorder
 

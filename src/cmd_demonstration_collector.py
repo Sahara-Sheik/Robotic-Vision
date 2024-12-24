@@ -8,7 +8,7 @@ from helper import ui_choose_task
 from robotcontrol.gamepad_controller import GamepadController
 from robotcontrol.keyboard_controller import KeyboardController
 from robotcontrol.program_controller import ProgramController
-from robot.al5d_position_controller import PositionController
+from robot.al5d_position_controller import PositionController, RobotPosition
 from camera.camera_controller import CameraController
 
 from settings import Config
@@ -100,7 +100,7 @@ def main():
     camera_controller.visualize = True
     #cameratracker = None
     # the XBox controller - we are using the control loop from this one
-    controller = "xbox"
+    controller = "program"
     if controller == "xbox":
         gamepad_controller = GamepadController(
             robot_controller=robot_controller, camera_controller=camera_controller)
@@ -123,7 +123,18 @@ def main():
     if controller == "program":
         program_controller = ProgramController(
             robot_controller=robot_controller, camera_controller=camera_controller)
-        demo_recorder = DemonstrationRecorder(camera_controller=camera_controller, controller=kb_controller, robot_controller=
+        
+
+        waypoints = []
+        rp = RobotPosition.from_normalized_vector([0.0, 0.0, 0.0, 0.0, 0.0, 1.0])
+        waypoints.append(rp)
+        rp = RobotPosition.from_normalized_vector([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
+        waypoints.append(rp)
+        rp = RobotPosition.from_normalized_vector([0.0, 1.0, 0.0, 0.0, 0.0, 1.0])
+        waypoints.append(rp)
+        program_controller.waypoints = waypoints
+
+        demo_recorder = DemonstrationRecorder(camera_controller=camera_controller, controller=program_controller, robot_controller=
                                     robot_controller, save_dir=demo_dir, task_name=task_dir.name)
         program_controller.demonstration_recorder = demo_recorder
         program_controller.control()
