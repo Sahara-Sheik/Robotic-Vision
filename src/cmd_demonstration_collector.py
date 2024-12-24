@@ -111,7 +111,8 @@ def main():
         gamepad_controller.control()
         print("====== Demonstration terminated and recorded successfully, bye. ======")
     if controller == "kb":
-        kb_controller = KeyboardController(robot_controller=robot_controller, camera_controller=camera_controller)
+        kb_controller = KeyboardController(
+            robot_controller=robot_controller, camera_controller=camera_controller)
         demo_recorder = DemonstrationRecorder(camera_controller=camera_controller, controller=kb_controller, robot_controller=
                                     robot_controller, save_dir=demo_dir, task_name=task_dir.name)
         # dr = None
@@ -119,8 +120,12 @@ def main():
         kb_controller.control()
         print("====== Demonstration terminated and recorded successfully, bye. ======")
     if controller == "program":
-        program_controller = 
-
+        program_controller = ProgramController(
+            robot_controller=robot_controller, camera_controller=camera_controller)
+        demo_recorder = DemonstrationRecorder(camera_controller=camera_controller, controller=kb_controller, robot_controller=
+                                    robot_controller, save_dir=demo_dir, task_name=task_dir.name)
+        program_controller.demonstration_recorder = demo_recorder
+        program_controller.control()
 
 if __name__ == "__main__":
     main()
