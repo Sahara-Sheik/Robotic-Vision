@@ -1,6 +1,10 @@
-# Keyboard based controller for the AL5D robot
+"""
+keyboard_controller.py
 
+Keyboard based controller for the AL5D robot
+"""
 from robot.al5d_position_controller import RobotPosition, PositionController
+from .abstract_controller import AbstractController
 
 import time
 # import serial 
@@ -10,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
-class KeyboardController:
+class KeyboardController(AbstractController):
     """
     A controller to control an AL5D robot with the keyboard. The assumption is that the keys are read out by the OpenCV camera controller.
 
@@ -42,30 +46,8 @@ class KeyboardController:
     """
 
     def __init__(self, robot_controller: PositionController = None, camera_controller = None, demonstration_recorder = None):
-        """Initialize the keyboard controller, possibly connected to a real robot."""
-        self.robot_controller = robot_controller
-        if robot_controller is not None:
-            self.pos_current = self.robot_controller.get_position()
-        else:
-            self.pos_current = RobotPosition()
-        self.pos_target = copy(self.pos_current)
-        # the home position
-        self.pos_home = copy(self.pos_current)
-        # the interval at which we are polling the controller
-        self.controller_interval = 0.1
-        # the actual interval
-        self.last_interval = self.controller_interval
-        # the interval at which we are updating the robot
-        self.robot_interval = 0.1
-        # the velocities of movements
-        self.v_distance = 1.0 # inch / second
-        self.v_height = 1.0 # inch / second
-        self.v_heading = 15.0 # angle degree / second
-        self.v_gripper = 50.0 # percentage / second
-        self.v_wrist_angle = 15.0 # angle degree / second
-        self.v_wrist_rotator = 0.1 # angle degree / second
-        self.camera_controller = camera_controller
-        self.demonstration_recorder = demonstration_recorder
+        super().__init__(robot_controller, camera_controller, demonstration_recorder)
+    
 
     def control(self):
         """The main control loop"""
@@ -156,33 +138,3 @@ class KeyboardController:
         if not ok:
             logger.warning(f"DANGER! exceeded range! {self.pos_target}")
         logger.warning(f"Target: {self.pos_target}")
-
-    def stop(self):
-        """Stops the controller and all the other subcomponents
-        FIXME: same as gamepad, maybe it can be moved
-        """
-        self.robot_controller.stop_robot()
-        if self.demonstration_recorder is not None:
-            self.demonstration_recorder.stop()
-        if self.camera_controller is not None:
-            self.camera_controller.stop()
-
-    def update(self):
-        """Updates the state of the various components
-        FIXME: same as gamepad, maybe it can be moved
-        """
-        logger.info(f"Update started")
-        if self.camera_controller is not None:
-            self.camera_controller.update()
-        if self.demonstration_recorder is not None:
-            self.demonstration_recorder.save()
-        logger.info(f"Update done")        
-
-    def control_robot(self):
-        """Control the robot by sending a command to move towards the target
-        FIXME: same as gamepad, maybe it can be moved
-        """
-        logger.info(f"Control robot: move to position {self.pos_target}")
-        if self.robot_controller is not None:
-            self.robot_controller.move(self.pos_target)
-        logger.info("Control robot done.")

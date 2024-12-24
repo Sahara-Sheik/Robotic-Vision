@@ -1,3 +1,8 @@
+"""
+gamepad_controller.py
+
+Gamepad-based controller for the AL5D robot
+"""
 from robot.al5d_position_controller import RobotPosition, PositionController
 from approxeng.input.selectbinder import ControllerResource, ControllerNotFoundError
 import time
@@ -8,36 +13,15 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
-class GamepadController:
+from .abstract_controller import AbstractController
+
+class GamepadController(AbstractController):
     """
     A controller to control an AL5D robot with an X360 type controller (tested with the Voyee). This controller is based on the approxeng.input library and it is only working in Linux.
     """
     def __init__(self, robot_controller: PositionController = None, camera_controller = None, demonstration_recorder = None):
-        """Initialize the XBox controller, possibly connected to a real robot."""
-        self.robot_controller = robot_controller
-        if robot_controller is not None:
-            self.pos_current = self.robot_controller.get_position()
-        else:
-            self.pos_current = RobotPosition()
-        self.pos_target = copy(self.pos_current)
-        # the home position
-        self.pos_home = copy(self.pos_current)
-        # the interval at which we are polling the controller
-        self.controller_interval = 0.1
-        # the actual interval
-        self.last_interval = self.controller_interval
-        # the interval at which we are updating the robot
-        self.robot_interval = 0.1
-        # the velocities corresponding to maximum push
-        self.v_distance = 1.0 # inch / second
-        self.v_height = 1.0 # inch / second
-        self.v_heading = 15.0 # angle degree / second
-        self.v_gripper = 50.0 # percentage / second
-        self.v_wrist_angle = 15.0 # angle degree / second
-        self.v_wrist_rotator = 0.1 # angle degree / second
-        self.camera_controller = camera_controller
-        self.demonstration_recorder = demonstration_recorder
-
+        super().__init__(robot_controller, camera_controller, demonstration_recorder)
+    
     def control(self):
         """The main control loop"""
         try:
@@ -69,23 +53,6 @@ class GamepadController:
             self.robot_controller.stop_robot()
 
 
-    def stop(self):
-        """Stops the controller and all the other subcomponents"""
-        self.robot_controller.stop_robot()
-        if self.demonstration_recorder is not None:
-            self.demonstration_recorder.stop()
-        if self.camera_controller is not None:
-            self.camera_controller.stop()
-
-    def update(self):
-        """Updates the state of the various components"""
-        logger.info(f"Update started")
-        if self.camera_controller is not None:
-            self.camera_controller.update()
-        if self.demonstration_recorder is not None:
-            self.demonstration_recorder.save()
-        logger.info(f"Update done")
-        
 
     def poll_controller(self, joystick):
         """Polls what is going on with the controller and updates the target position of the robot accordingly. """
@@ -142,12 +109,6 @@ class GamepadController:
             logger.warning(f"DANGER! exceeded range! {self.pos_target}")
         logger.warning(f"Target: {self.pos_target}")
 
-    def control_robot(self):
-        """Control the robot by sending a command to move towards the target"""
-        logger.info(f"Control robot: move to position {self.pos_target}")
-        if self.robot_controller is not None:
-            self.robot_controller.move(self.pos_target)
-        logger.info("Control robot done.")
 
     def __str__(self):
         return f"XBoxController:\n\t{self.pos_target}"

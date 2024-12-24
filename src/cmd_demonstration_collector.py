@@ -5,8 +5,9 @@ import json
 # import sys
 
 from helper import ui_choose_task
-from gamepad.gamepad_controller import GamepadController
-from keyboard.keyboard_controller import KeyboardController
+from robotcontrol.gamepad_controller import GamepadController
+from robotcontrol.keyboard_controller import KeyboardController
+from robotcontrol.program_controller import ProgramController
 from robot.al5d_position_controller import PositionController
 from camera.camera_controller import CameraController
 
