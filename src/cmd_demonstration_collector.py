@@ -130,7 +130,7 @@ def main():
         
         # create wpcount 
         waypoints = []
-        wpcount = 3
+        wpcount = 10
         while True:
             norm = [0] * 6
             for df in range(6):

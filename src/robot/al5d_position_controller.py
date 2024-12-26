@@ -24,12 +24,12 @@ POS_DEFAULT = {"height": 5.0, "distance": 5.0, "heading": 0.0,
 
 # Handwired wrist-rotation for a much shorter range as it was creating problems.
 
-POS_MIN = {"height": 1.0, "distance": 2.0, "heading": -90.0, 
+POS_MIN = {"height": 1.0, "distance": 3.0, "heading": -90.0, 
                "wrist_angle": -90.0, "wrist_rotation": 60.0, 
                "gripper": 0}
 
 POS_MAX = {"height": 5.0, "distance": 10.0, "heading": 90.0, 
-               "wrist_angle": 90.0, "wrist_rotation": 90.0, 
+               "wrist_angle": 0.0, "wrist_rotation": 90.0, 
                "gripper": 100}
 
 

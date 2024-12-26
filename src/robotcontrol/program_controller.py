@@ -56,6 +56,7 @@ class ProgramController(AbstractController):
         self.interactive_confirm = True
         # try to fix the wrist_rotation from here
         self.v_wrist_rotation = 5.0
+        self.v_wrist_angle = 15.0
 
     def set_waypoints(self, waypoints):
         """Sets the waypoints the robot needs to as list of positions"""
