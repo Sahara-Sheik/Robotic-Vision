@@ -12,7 +12,7 @@ def replay_full_speed(robot_controller, demo_dir, maxsteps, delay = 0.1):
         file_name = Path(demo_dir, f"{i:05d}.json")
         with open(file_name, "r") as f:
             data = json.load(f)
-        position = RobotPosition.from_dict(data["rc-position-target"])
+        position = RobotPosition(data["rc-position-target"])
         robot_controller.move(position)
         time.sleep(delay)
 

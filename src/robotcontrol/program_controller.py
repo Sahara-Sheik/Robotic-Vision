@@ -30,18 +30,19 @@ def move_position_towards(current: RobotPosition,
     target: RobotPosition, ctrl):
     """Move a position towards the target with specific velocities"""
     rv = RobotPosition()
-    rv.height = move_towards(current.height, target.height, 
+    rv["height"] = move_towards(current["height"], target["height"], 
                              ctrl.v_height * ctrl.robot_interval)
-    rv.distance = move_towards(current.distance, target.distance, 
+    rv.distance = move_towards(current["distance"], target["distance"], 
                                ctrl.v_distance * ctrl.robot_interval)
-    rv.heading = move_towards(current.heading, target.heading, 
+    rv.heading = move_towards(current["heading"], target["heading"], 
                              ctrl.v_heading * ctrl.robot_interval)
-    rv.wrist_angle = move_towards(current.wrist_angle, target.wrist_angle, 
-                                  ctrl.v_wrist_angle * ctrl.robot_interval)
-    rv.wrist_rotation = move_towards(current.wrist_rotation, 
-                                     target.wrist_rotation, 
+    rv.wrist_angle = move_towards(
+        current["wrist_angle"], target["wrist_angle"],
+        ctrl.v_wrist_angle * ctrl.robot_interval)
+    rv.wrist_rotation = move_towards(current["wrist_rotation"], 
+                                     target["wrist_rotation"], 
                                      ctrl.v_wrist_rotation * ctrl.robot_interval)
-    rv.gripper = move_towards(current.gripper, target.gripper,
+    rv.gripper = move_towards(current["gripper"], target["gripper"],
                               ctrl.v_gripper * ctrl.robot_interval)
     return rv
 

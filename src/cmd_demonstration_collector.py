@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import cv2
 import json
+from copy import copy
 # import sys
 
 from helper import ui_choose_task
@@ -37,7 +38,7 @@ class DemonstrationRecorder:
         save_prefix = f"{self.counter:05d}"
         self.counter += 1
         data = {}
-        data["rc-position-target"] = self.remote_control.pos_target.as_dict()
+        data["rc-position-target"] = copy(self.remote_control.pos_target.values)
         data["rc-angle-target"] = self.robot_controller.angle_controller.as_dict()
         data["rc-pulse-target"] = self.robot_controller.pulse_controller.as_dict()
         data["reward"] = 0.0 # placeholder for the reward
@@ -100,7 +101,8 @@ def main():
     camera_controller.visualize = True
     #cameratracker = None
     # the XBox controller - we are using the control loop from this one
-    controller = "program"
+    # controller = "program"
+    controller = "xbox"
     if controller == "xbox":
         gamepad_controller = GamepadController(
             robot_controller=robot_controller, camera_controller=camera_controller)
@@ -120,6 +122,7 @@ def main():
         kb_controller.demonstration_recorder = demo_recorder
         kb_controller.control()
         print("====== Demonstration terminated and recorded successfully, bye. ======")
+
     if controller == "program":
         program_controller = ProgramController(
             robot_controller=robot_controller, camera_controller=camera_controller)

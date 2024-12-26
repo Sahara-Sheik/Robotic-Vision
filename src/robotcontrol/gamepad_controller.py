@@ -97,14 +97,14 @@ class GamepadController(AbstractController):
             self.pos_target = copy(self.pos_home)
             return
         # applying the changes 
-        self.pos_target.distance += delta_distance
-        self.pos_target.height += delta_height
-        self.pos_target.heading += delta_heading
-        self.pos_target.wrist_angle += delta_wrist_angle
-        self.pos_target.wrist_rotation += delta_wrist_rotation
-        self.pos_target.gripper += delta_gripper
+        self.pos_target["distance"] += delta_distance
+        self.pos_target["height"] += delta_height
+        self.pos_target["heading"] += delta_heading
+        self.pos_target["wrist_angle"] += delta_wrist_angle
+        self.pos_target["wrist_rotation"] += delta_wrist_rotation
+        self.pos_target["gripper"] += delta_gripper
         # FIXME: applying a safety reset which prevents us going out of range
-        ok, self.pos_target = RobotPosition.limit(self.pos_target)
+        ok = RobotPosition.limit(self.pos_target)
         if not ok:
             logger.warning(f"DANGER! exceeded range! {self.pos_target}")
         logger.warning(f"Target: {self.pos_target}")
