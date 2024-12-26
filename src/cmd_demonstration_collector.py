@@ -3,6 +3,7 @@ from datetime import datetime
 import cv2
 import json
 from copy import copy
+import random
 # import sys
 
 from helper import ui_choose_task
@@ -102,7 +103,7 @@ def main():
     #cameratracker = None
     # the XBox controller - we are using the control loop from this one
     # controller = "program"
-    controller = "xbox"
+    controller = "program"
     if controller == "xbox":
         gamepad_controller = GamepadController(
             robot_controller=robot_controller, camera_controller=camera_controller)
@@ -127,18 +128,27 @@ def main():
         program_controller = ProgramController(
             robot_controller=robot_controller, camera_controller=camera_controller)
         
-
+        # create wpcount 
         waypoints = []
-        rp = RobotPosition.from_normalized_vector([0.0, 0.0, 0.0, 0.0, 0.0, 1.0])
-        waypoints.append(rp)
-        rp = RobotPosition.from_normalized_vector([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
-        waypoints.append(rp)
-        rp = RobotPosition.from_normalized_vector([0.0, 1.0, 0.0, 0.0, 0.0, 1.0])
-        waypoints.append(rp)
+        wpcount = 3
+        while True:
+            norm = [0] * 6
+            for df in range(6):
+                norm[df] = random.random()                
+            rp = RobotPosition.from_normalized_vector(norm)
+            if RobotPosition.limit(rp):
+                print(f"added waypoint {rp}")
+                waypoints.append(rp)
+            if len(waypoints) >= wpcount:
+                break
+
         program_controller.waypoints = waypoints
+        program_controller.interactive_confirm = False
+
 
         demo_recorder = DemonstrationRecorder(camera_controller=camera_controller, controller=program_controller, robot_controller=
                                     robot_controller, save_dir=demo_dir, task_name=task_dir.name)
+
         program_controller.demonstration_recorder = demo_recorder
         program_controller.control()
 

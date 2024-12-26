@@ -14,13 +14,24 @@ logging.basicConfig(level=logging.WARNING)
 POS_DEFAULT = {"height": 5.0, "distance": 5.0, "heading": 0.0, 
                "wrist_angle": -45.0, "wrist_rotation": 75.0, "gripper": 100}
 
-POS_MIN = {"height": 1.0, "distance": 1.0, "heading": -90.0, 
-               "wrist_angle": -90.0, "wrist_rotation": 75.0 - 90.0, 
+#POS_MIN = {"height": 1.0, "distance": 1.0, "heading": -90.0, 
+#               "wrist_angle": -90.0, "wrist_rotation": 75.0 - 90.0, 
+#               "gripper": 0}
+
+#POS_MAX = {"height": 5.0, "distance": 10.0, "heading": 90.0, 
+#               "wrist_angle": 90.0, "wrist_rotation": 75.0 + 90.0, 
+#               "gripper": 100}
+
+# Handwired wrist-rotation for a much shorter range as it was creating problems.
+
+POS_MIN = {"height": 1.0, "distance": 2.0, "heading": -90.0, 
+               "wrist_angle": -90.0, "wrist_rotation": 60.0, 
                "gripper": 0}
 
 POS_MAX = {"height": 5.0, "distance": 10.0, "heading": 90.0, 
-               "wrist_angle": 90.0, "wrist_rotation": 75.0 + 90.0, 
+               "wrist_angle": 90.0, "wrist_rotation": 90.0, 
                "gripper": 100}
+
 
 class RobotPosition:
     """A data class describing the high level robot position"""

@@ -32,17 +32,17 @@ def move_position_towards(current: RobotPosition,
     rv = RobotPosition()
     rv["height"] = move_towards(current["height"], target["height"], 
                              ctrl.v_height * ctrl.robot_interval)
-    rv.distance = move_towards(current["distance"], target["distance"], 
+    rv["distance"] = move_towards(current["distance"], target["distance"], 
                                ctrl.v_distance * ctrl.robot_interval)
-    rv.heading = move_towards(current["heading"], target["heading"], 
+    rv["heading"] = move_towards(current["heading"], target["heading"], 
                              ctrl.v_heading * ctrl.robot_interval)
-    rv.wrist_angle = move_towards(
+    rv["wrist_angle"] = move_towards(
         current["wrist_angle"], target["wrist_angle"],
         ctrl.v_wrist_angle * ctrl.robot_interval)
-    rv.wrist_rotation = move_towards(current["wrist_rotation"], 
+    rv["wrist_rotation"] = move_towards(current["wrist_rotation"], 
                                      target["wrist_rotation"], 
                                      ctrl.v_wrist_rotation * ctrl.robot_interval)
-    rv.gripper = move_towards(current["gripper"], target["gripper"],
+    rv["gripper"] = move_towards(current["gripper"], target["gripper"],
                               ctrl.v_gripper * ctrl.robot_interval)
     return rv
 
@@ -52,6 +52,10 @@ class ProgramController(AbstractController):
 
     def __init__(self, robot_controller: PositionController = None, camera_controller = None, demonstration_recorder = None):
         super().__init__(robot_controller, camera_controller, demonstration_recorder)
+        self.max_timesteps = 1000
+        self.interactive_confirm = True
+        # try to fix the wrist_rotation from here
+        self.v_wrist_rotation = 5.0
 
     def set_waypoints(self, waypoints):
         """Sets the waypoints the robot needs to as list of positions"""
@@ -63,8 +67,8 @@ class ProgramController(AbstractController):
             return None
         wp = self.waypoints[0]
         dist = self.pos_current.empirical_distance(wp)
-        # print(f"wp {wp}")
-        # print(f"Distance to wp {dist}")
+        print(f"wp {wp}")
+        print(f"Distance to wp {dist}")
         if self.pos_current.empirical_distance(wp) <= 0.001:
             # current waypoint was reached get next
             del self.waypoints[0]
@@ -82,16 +86,22 @@ class ProgramController(AbstractController):
         while True:
             start_time = time.time() 
             key = self.camera_controller.update() 
-            # if we are exiting, call the stopping of the robot, of the recording and the vision
             if self.exit_control:
                 self.stop()
                 break;            
             # reached, self.pos_target = self.move_to_waypoint()
-            if self.next_pos() is None:
+            self.max_timesteps -= 1
+            if self.next_pos() is None or self.max_timesteps <= 0:
                 self.stop()
                 break
+            if self.interactive_confirm:
+                dist = self.pos_current.empirical_distance(self.pos_target)
+                print(f"Proposed next target: {self.pos_target} which is at distance {dist} from current")
+                proceed = input("Proceed? ") in ["y", "Y", ""]
+                if not proceed:
+                    self.stop()
+                    break
             self.control_robot()
-            # maybe the current is not done:
             self.pos_current = self.pos_target
             self.update()
             end_time = time.time() 
