@@ -25,7 +25,10 @@ def load_image_to_batch(image, transform):
     """Takes a PIL image and transforms it into a tensor representing a single element batch, moved to the appropriate device. 
     This format should be approprate for feeding into the sensor processing model."""
     image_rgb = image.convert("RGB")
-    image_tensor = transform(image_rgb)
+    if transform is not None:
+        image_tensor = transform(image_rgb)
+    else: # transform None is just transform to tensor
+        image_tensor = transforms.ToTensor()(image_rgb)
     image_tensor_for_pic = image_tensor.permute(1, 2, 0)
     image_batch = image_tensor.unsqueeze(0)
     # Move tensor to GPU if available

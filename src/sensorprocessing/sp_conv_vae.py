@@ -1,3 +1,8 @@
+"""
+sp_conv_vae.py
+
+Sensor processing using the encoder part of a convolutional VAE.
+"""
 from .sensor_processing import AbstractSensorProcessing
 
 import sys
@@ -7,11 +12,11 @@ from settings import Config
 sys.path.append(Config().values["conv_vae"]["code_dir"])
 
 #import argparse
-import numpy as np
+# import numpy as np
 import torch
-from tqdm import tqdm
+#from tqdm import tqdm
 
-from PIL import Image
+# from PIL import Image
 
 
 # these imports are from the Conv-VAE package
@@ -36,7 +41,6 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 from encoding_conv_vae.conv_vae import get_conv_vae_config, create_configured_vae_json, latest_model, latest_training_run, latest_json_and_model, get_conv_vae_config, get_transform_to_robot
 
 from .sensor_processing import AbstractSensorProcessing
-from .sp_helper import load_picturefile_to_tensor
 
 
 def get_sp_of_conv_vae_experiment(run):
@@ -91,10 +95,6 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         mus = torch.squeeze(mu)
         return mus.cpu().numpy()
     
-    def process_file(self, sensor_readings_file):
-        """"""
-        sensor_readings, image = load_picturefile_to_tensor(sensor_readings_file, self.transform)
-        output = self.process(sensor_readings)
-        return output
+
         
         

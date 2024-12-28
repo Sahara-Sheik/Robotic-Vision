@@ -10,7 +10,7 @@ def get_demodir():
     demodir.mkdir(parents=True, exist_ok=True)
     return demodir
 
-def ui_choose_task(offer_task_creation = False):
+def ui_choose_task(offer_task_creation = False, task_id = None):
     data_dir = get_demodir()
     demos_dir = Path(data_dir, "demos")
     if demos_dir.exists():
@@ -31,12 +31,13 @@ def ui_choose_task(offer_task_creation = False):
     for key in tasks_dict:
         print(f"\t{key}: {tasks_dict[key].name}")
     sys.stdout.flush()
-    task_id = int(input("Choose the task: "))
+    if task_id is None:
+        task_id = int(input("Choose the task: "))
     task_dir = tasks_dict[task_id]
     print(f"You chose task: {task_dir.name}")
     return data_dir, task_dir
 
-def ui_choose_demo(task_dir):
+def ui_choose_demo(task_dir, demo_id = None):
     """Chooses a demonstration directory from a task"""
     tasks = [item for item in task_dir.iterdir() if item.is_dir()]
     print(f"Demo directory {task_dir} found with demonstrations {tasks}")
@@ -46,7 +47,8 @@ def ui_choose_demo(task_dir):
     for key in demos_dict:
         print(f"\t{key}: {demos_dict[key].name}")
     sys.stdout.flush()
-    demo_id = int(input("Choose the demonstration: "))
+    if demo_id is None:
+        demo_id = int(input("Choose the demonstration: "))
     demo_dir = demos_dict[demo_id]
     print(f"You chose demonstration: {demo_dir.name}")
     return demo_dir

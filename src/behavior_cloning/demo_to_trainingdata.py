@@ -3,12 +3,17 @@ demo_to_trainingdata.py
 
 Create training data from demonstrations. 
 """
+import sys
+sys.path.append("..")
+
 import torch
 import helper
 import pathlib
 import json
 from pprint import pformat
 import numpy as np
+from sensorprocessing.sp_helper import load_picturefile_to_tensor
+
 
 def create_RNN_training_sequence_xy(x_seq, y_seq, sequence_length):
     """Create supervised training data for RNNs such as LSTM from two sequences. In this data, from a string of length sequence_length in x_seq we are predicting the next item in y_seq. 
@@ -91,7 +96,14 @@ class BCDemonstration:
         filepath = pathlib.Path(self.source_dir, f"{i:05d}_{self.camera}.jpg")
         val = self.sensorprocessor.process_file(filepath)
         return val
-            
+    
+    def get_image(self, i, transform = None):
+        """Gets the image as a torch batch"""
+        filepath = pathlib.Path(self.source_dir, f"{i:05d}_{self.camera}.jpg")
+        sensor_readings, image = load_picturefile_to_tensor(filepath, transform)
+        return sensor_readings, image
+        
+
     def get_a(self, i):
         filepath = pathlib.Path(self.source_dir, f"{i:05d}.json") 
         with open(filepath) as file:
