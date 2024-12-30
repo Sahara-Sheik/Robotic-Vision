@@ -39,7 +39,7 @@ def create_RNN_training_sequence_xy(x_seq, y_seq, sequence_length):
     #inputs = np.array(inputs)
     #targets = np.array(targets)
 
-    # Convert lists to tensors for training
+    # Convert lists to tensors for tWraining
     inputs = torch.stack(inputs)   # Shape: [num_samples, sequence_length, latent_size]
     targets = torch.stack(targets) # Shape: [num_samples, latent_size]
     return inputs, targets
@@ -103,7 +103,6 @@ class BCDemonstration:
         sensor_readings, image = load_picturefile_to_tensor(filepath, transform)
         return sensor_readings, image
         
-
     def get_a(self, i):
         filepath = pathlib.Path(self.source_dir, f"{i:05d}.json") 
         with open(filepath) as file:
