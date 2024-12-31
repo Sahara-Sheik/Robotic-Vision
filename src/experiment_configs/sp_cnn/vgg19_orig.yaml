@@ -1,4 +1,4 @@
 # using the original vgg19 model's features without finetuning
 name : 'vgg19_orig'
 latent_dims: 512
-epochs: 3
+epochs: 50
