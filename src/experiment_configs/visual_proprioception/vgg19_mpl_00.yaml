@@ -3,9 +3,9 @@
 
 # the sensor processing type, and the experiment and run 
 # that specifies that
-sensor_processing: 'vae'
-sp_experiment: 'conv_vae'
-sp_run: 'vae_01'
+sensor_processing: 'vgg19'
+sp_experiment: 'sp_cnn'
+sp_run: 'vgg19_orig'
 
 # this should be the same one as the sp
 encoding_size: 256

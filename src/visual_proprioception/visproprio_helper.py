@@ -6,8 +6,10 @@ Helper functions for visual proprioception training
 
 import pathlib
 import torch
+import numpy as np
 from settings import Config
 from behavior_cloning.demo_to_trainingdata import BCDemonstration
+from robot.al5d_position_controller import RobotPosition
 
 
 def load_demonstrations_as_proprioception_training(sp, task, proprioception_input_file, proprioception_target_file):

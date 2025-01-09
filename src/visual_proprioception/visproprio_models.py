@@ -25,11 +25,11 @@ class VisProprio_SimpleMLPRegression(nn.Module):
         self.output_size = exp["output_size"] # normally, 6
 
         self.model = nn.Sequential(
-            nn.Linear(self.input_size, self.hidden_size1),
+            nn.Linear(self.input_size, self.hidden_size_1),
             nn.ReLU(),
-            nn.Linear(self.hidden_size1, self.hidden_size2),
+            nn.Linear(self.hidden_size_1, self.hidden_size_2),
             nn.ReLU(),
-            nn.Linear(self.hidden_size2, self.output_size)
+            nn.Linear(self.hidden_size_2, self.output_size)
         )
 
     def forward(self, x):
