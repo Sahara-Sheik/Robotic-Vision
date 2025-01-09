@@ -38,8 +38,11 @@ from pathlib import Path
 
 from mpl_toolkits.axes_grid1 import ImageGrid
 
-from encoding_conv_vae.conv_vae import get_conv_vae_config, create_configured_vae_json, latest_model, latest_training_run, latest_json_and_model, get_conv_vae_config, get_transform_to_robot
+from encoding_conv_vae.conv_vae import get_conv_vae_config
 
+# create_configured_vae_json, latest_model, latest_training_run, latest_json_and_model, get_conv_vae_config, 
+
+from .sp_helper import get_transform_to_robot
 from .sensor_processing import AbstractSensorProcessing
 
 

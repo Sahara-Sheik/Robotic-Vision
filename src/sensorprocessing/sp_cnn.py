@@ -8,11 +8,13 @@ sys.path.append("..")
 from settings import Config
 
 from .sensor_processing import AbstractSensorProcessing
+from .sp_helper import get_transform_to_robot, load_picturefile_to_tensor
 
 import pathlib
 import torch
 import torch.nn as nn
 from torchvision import models
+from torchvision import transforms
 
 
 class VGG19Regression(nn.Module):
@@ -66,8 +68,11 @@ class VGG19SensorProcessing(AbstractSensorProcessing):
 
     def __init__(self, exp, device="cpu"):
         """Create the sensormodel """
-        #self.run = "vgg19_orig"
-        #self.exp = Config().get_experiment("sp_cnn", self.run)
+        # self.transform = get_transform_to_robot()
+        # FIXME: I think that this was trained on different size...
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
         self.exp = exp
         hidden_size = exp["latent_dims"]
         output_size = Config()["robot"]["action_space_size"]
@@ -81,9 +86,16 @@ class VGG19SensorProcessing(AbstractSensorProcessing):
     def process(self, sensor_readings):
         """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
         Returns the z encoding in the form of a numpy array."""
+        print(f"sensor readings shape {sensor_readings.shape}")
         with torch.no_grad():
             z = self.enc.encode(sensor_readings)
         z = torch.squeeze(z)
         return z.cpu().numpy()
+    
+    def process_file(self, sensor_readings_file):
+        """Processsed file"""
+        sensor_readings, image = load_picturefile_to_tensor(sensor_readings_file, self.transform)
+        output = self.process(sensor_readings)
+        return output
     
         

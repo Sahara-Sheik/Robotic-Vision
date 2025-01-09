@@ -81,7 +81,7 @@ class Config:
         experiment_directory = Path(self.values["experiment_system_dependent_dir"])
         experiment_sys_dep = Path(experiment_directory, group_name, run_name + "_sysdep.yaml")
         if not experiment_sys_dep.exists():
-            print(f"Missing experiment system dependent config file {experiment_sys_dep}, that is ok, proceeding.")
+            print(f"Note: no system dependent config file {experiment_sys_dep},\n that is ok, proceeding.")
             exp_config = indep_config
         else: 
             with experiment_sys_dep.open("rt") as handle:
