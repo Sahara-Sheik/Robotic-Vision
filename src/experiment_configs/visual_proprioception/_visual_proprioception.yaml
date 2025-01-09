@@ -4,5 +4,12 @@ proprioception_target_file: 'train_targets.pt'
 proprioception_test_input_file: 'test_inputs.pt'
 proprioception_test_target_file: 'test_targets.pt'
 
+# this should be the same one as the sp
+encoding_size: 256
+regressor_hidden_size_1: 64
+regressor_hidden_size_2: 64
+# this should be somehow picked from the regular config
+output_size: 6
+
 # epochs for training
 epochs: 100
