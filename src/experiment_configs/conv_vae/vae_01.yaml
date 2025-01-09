@@ -3,3 +3,5 @@ latent_dims: 256
 
 model_subdir: '1222_150723'
 model_checkpoint: 'checkpoint-epoch100.pth'
+training_task: 'proprioception-cluttered' 
+epochs: 2
