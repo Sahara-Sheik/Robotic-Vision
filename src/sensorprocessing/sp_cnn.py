@@ -64,7 +64,7 @@ class VGG19Regression(nn.Module):
 class VGG19SensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained VGG19 architecture from above."""
 
-    def __init__(self, exp):
+    def __init__(self, exp, device="cpu"):
         """Create the sensormodel """
         #self.run = "vgg19_orig"
         #self.exp = Config().get_experiment("sp_cnn", self.run)
@@ -72,6 +72,7 @@ class VGG19SensorProcessing(AbstractSensorProcessing):
         hidden_size = exp["latent_dims"]
         output_size = Config()["robot"]["action_space_size"]
         self.enc = VGG19Regression(hidden_size=hidden_size, output_size=output_size)
+        self.enc = self.enc.to(device)
         modelfile = pathlib.Path(exp["data_dir"], 
                                 exp["proprioception_mlp_model_file"])
         assert modelfile.exists()
