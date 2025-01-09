@@ -1,7 +1,7 @@
 # Note, this overwrites the original 128
 latent_dims: 256
 
-model_subdir: '1222_150723'
-model_checkpoint: 'checkpoint-epoch100.pth'
+model_subdir: '0108_204230'
+model_checkpoint: 'checkpoint-epoch10.pth'
 training_task: 'proprioception-cluttered' 
-epochs: 2
+epochs: 10
