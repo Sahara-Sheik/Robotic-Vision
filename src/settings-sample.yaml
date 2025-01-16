@@ -1,3 +1,9 @@
+# the location where the system dependent experiment config files are
+"experiment_system_dependent_dir": '/the/dir/where/your/machine/dependent/experiment/configs/go'
+# the location where the experiment data is put
+# the experiments's specific data will be _/className/runName
+"experiment_data": '/the/dir/where/your/experiment/data/and/models/go'
+
 robot:
   
   # The USB port where the AL5D robot is connected on this particular computer.
