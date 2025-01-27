@@ -20,6 +20,18 @@ robot:
   latent_encoding_size: 128
 
 
+  # Action space size 
+  action_space_size: 6
+
+  # Image size: the size to which the images need to be reduced 
+  # before introduced into the vision system. 
+  # CONV-VAE cannot handle anything but 64 in its current configuration
+  image_size: [64, 64]
+  
+  # The image size at which we are saving at demonstrations. It is larger 
+  # than the one used by conv_vae to allow for 
+  saved_image_size: [256, 256]
+
 demos:
 
   # Data directory for demonstrations. This is where demonstrations are saved, or loaded from in the case of replay
