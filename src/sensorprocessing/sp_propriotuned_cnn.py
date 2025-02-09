@@ -17,7 +17,7 @@ from torchvision import models
 from torchvision import transforms
 
 
-class VGG19Regression(nn.Module):
+class VGG19ProprioTunedRegression(nn.Module):
     """Neural network used to create a latent embedding. Starts with a VGG19 neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception. 
     
     When used for encoding, the processing happens only to an internal layer in the MLP.
@@ -25,7 +25,7 @@ class VGG19Regression(nn.Module):
 
     def __init__(self, hidden_size, output_size):
 
-        super(VGG19Regression, self).__init__()
+        super(VGG19ProprioTunedRegression, self).__init__()
         vgg19 = models.vgg19(pretrained=True)
         self.feature_extractor = vgg19.features
         self.flatten = nn.Flatten()  # Flatten the output for the fully connected layer
@@ -63,7 +63,7 @@ class VGG19Regression(nn.Module):
         return h3
         
 
-class VGG19SensorProcessing(AbstractSensorProcessing):
+class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained VGG19 architecture from above."""
 
     def __init__(self, exp, device="cpu"):
@@ -76,7 +76,7 @@ class VGG19SensorProcessing(AbstractSensorProcessing):
         self.exp = exp
         hidden_size = exp["latent_dims"]
         output_size = Config()["robot"]["action_space_size"]
-        self.enc = VGG19Regression(hidden_size=hidden_size, output_size=output_size)
+        self.enc = VGG19ProprioTunedRegression(hidden_size=hidden_size, output_size=output_size)
         self.enc = self.enc.to(device)
         modelfile = pathlib.Path(exp["data_dir"], 
                                 exp["proprioception_mlp_model_file"])
@@ -93,8 +93,8 @@ class VGG19SensorProcessing(AbstractSensorProcessing):
         return z.cpu().numpy()
     
     def process_file(self, sensor_readings_file):
-        """Processsed file"""
-        sensor_readings, image = load_picturefile_to_tensor(sensor_readings_file, self.transform)
+        """Processs the sensor readings directly from the file"""
+        sensor_readings, _ = load_picturefile_to_tensor(sensor_readings_file, self.transform)
         output = self.process(sensor_readings)
         return output
     
