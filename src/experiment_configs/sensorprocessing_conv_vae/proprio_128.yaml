@@ -1,0 +1,11 @@
+# This run creates a conv_vae encoding of width 128, planned for the 
+# visual proprioception experiments
+
+latent_dims: 128
+training_task: 'proprio_sp_training' 
+epochs: 10
+
+# These values need to be added _after_ training because they 
+# are created in an unpredictable location by the library
+model_subdir: '0108_204230'
+model_checkpoint: 'checkpoint-epoch10.pth'
