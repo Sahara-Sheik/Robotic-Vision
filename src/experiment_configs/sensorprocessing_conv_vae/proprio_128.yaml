@@ -5,6 +5,9 @@ latent_dims: 128
 training_task: 'proprio_sp_training' 
 epochs: 10
 
+validation_task: 'proprio_sp_validation'
+validation_demo: '2024_12_26__16_44_06'
+
 # These values need to be added _after_ training because they 
 # are created in an unpredictable location by the library
 # model_subdir: '0108_204230'
