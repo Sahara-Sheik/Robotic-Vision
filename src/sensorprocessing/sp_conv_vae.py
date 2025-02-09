@@ -39,18 +39,15 @@ from pathlib import Path
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 from sensorprocessing.conv_vae import get_conv_vae_config
-
-# create_configured_vae_json, latest_model, latest_training_run, latest_json_and_model, get_conv_vae_config, 
-
 from .sp_helper import get_transform_to_robot
 from .sensor_processing import AbstractSensorProcessing
 
 
-def get_sp_of_conv_vae_experiment(run):
+def get_sp_of_conv_vae_experiment(exp):
     """
-    Gets the sensorprocessor of a conv vae experiment
+    Creates a sensor processing object based on the saved Conv-VAE model 
+    of a specific experiment
     """
-    exp = Config().get_experiment("conv_vae", run)
     model_subdir = Path(exp["data_dir"], exp["model_dir"], "models", exp["model_name"], exp["model_subdir"])
     conv_vae_jsonfile = Path(model_subdir, "config.json")
     resume_model_pthfile = Path(model_subdir, exp["model_checkpoint"])
