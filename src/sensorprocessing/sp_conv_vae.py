@@ -11,13 +11,7 @@ sys.path.append("..")
 from settings import Config
 sys.path.append(Config().values["conv_vae"]["code_dir"])
 
-#import argparse
-# import numpy as np
 import torch
-#from tqdm import tqdm
-
-# from PIL import Image
-
 
 # these imports are from the Conv-VAE package
 import data_loader.data_loaders as module_data
@@ -29,44 +23,24 @@ from torch.nn import functional as F
 import torchvision.utils as vutils
 from torchvision import transforms
 from torch.autograd import Variable
-#import os
 import matplotlib.pyplot as plt
 import argparse
-#import socket
 from pathlib import Path
-#import json
 
-from mpl_toolkits.axes_grid1 import ImageGrid
+# from mpl_toolkits.axes_grid1 import ImageGrid
 
 from sensorprocessing.conv_vae import get_conv_vae_config
 from .sp_helper import get_transform_to_robot
 from .sensor_processing import AbstractSensorProcessing
 
-
-def get_sp_of_conv_vae_experiment(exp):
-    """
-    Creates a sensor processing object based on the saved Conv-VAE model 
-    of a specific experiment
-    """
-    model_subdir = Path(exp["data_dir"], exp["model_dir"], "models", exp["model_name"], exp["model_subdir"])
-    conv_vae_jsonfile = Path(model_subdir, "config.json")
-    resume_model_pthfile = Path(model_subdir, exp["model_checkpoint"])
-    print(conv_vae_jsonfile)
-    if conv_vae_jsonfile.exists():
-        print("Exists!")
-    print(resume_model_pthfile)
-    sp = ConvVaeSensorProcessing(conv_vae_jsonfile, resume_model_pthfile)
-    print(sp.model)
-    print(sp.model.encoder)
-    print(f"latent_dim {sp.model.latent_dim}")
-    # print(model.hidden_dims)
-    return sp
-
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
     """Sensor processing based on a pre-trained Conv-VAE"""
 
-    def __init__(self, conv_vae_jsonfile, resume_model_pthfile):
+    def __init__(self, exp):
         """Restore a pre-trained model based on the configuration json file and the model file"""
+        model_subdir = Path(exp["data_dir"], exp["model_dir"], "models", exp["model_name"], exp["model_subdir"])
+        self.conv_vae_jsonfile = Path(model_subdir, "config.json")
+        self.resume_model_pthfile = Path(model_subdir, exp["model_checkpoint"])
         self.conv_vae_jsonfile = conv_vae_jsonfile
         self.resume_model_pthfile = resume_model_pthfile
         self.vae_config = get_conv_vae_config(
