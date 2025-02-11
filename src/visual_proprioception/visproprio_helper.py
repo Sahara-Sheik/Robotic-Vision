@@ -10,7 +10,7 @@ import numpy as np
 from settings import Config
 from behavior_cloning.demo_to_trainingdata import BCDemonstration
 from robot.al5d_position_controller import RobotPosition
-
+from sensorprocessing import sp_conv_vae, sp_propriotuned_cnn
 
 def load_demonstrations_as_proprioception_training(sp, task, proprioception_input_file, proprioception_target_file):
     """
@@ -78,3 +78,19 @@ def load_demonstrations_as_proprioception_training(sp, task, proprioception_inpu
     retval["targets_validation"] = shuffled_targets[training_size:]
 
     return retval
+
+
+def get_visual_proprioception_sp(exp):
+    """Gets the sensor processing component specified by the 
+    visual_proprioception experiment."""
+    if exp["sensor_processing"] == "ConvVaeSensorProcessing":
+        spexp = Config().get_experiment(
+            exp['sp_experiment'], exp['sp_run'])
+        sp = sp_conv_vae.ConvVaeSensorProcessing(spexp)
+        return sp
+    elif exp['sensor_processing']=="VGG19ProprioTunedSensorProcessing":
+        spexp = Config().get_experiment(exp['sp_experiment'], exp['sp_run'])
+        sp = sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
+        return sp
+    else:
+        raise Exception('Unknown sensor processing {exp["sensor_processing"]}')
