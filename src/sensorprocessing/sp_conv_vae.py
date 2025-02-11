@@ -41,8 +41,8 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         model_subdir = Path(exp["data_dir"], exp["model_dir"], "models", exp["model_name"], exp["model_subdir"])
         self.conv_vae_jsonfile = Path(model_subdir, "config.json")
         self.resume_model_pthfile = Path(model_subdir, exp["model_checkpoint"])
-        self.conv_vae_jsonfile = conv_vae_jsonfile
-        self.resume_model_pthfile = resume_model_pthfile
+        # self.conv_vae_jsonfile = conv_vae_jsonfile
+        # self.resume_model_pthfile = resume_model_pthfile
         self.vae_config = get_conv_vae_config(
             self.conv_vae_jsonfile, 
             self.resume_model_pthfile, 

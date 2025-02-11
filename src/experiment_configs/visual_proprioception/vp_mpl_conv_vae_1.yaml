@@ -1,20 +1,18 @@
-# This is a baseline, and it is designed to run quickly for 
-# debugging.
+# information about the training task
+output_size: 6
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'
 
-# the sensor processing type, and the experiment and run 
-# that specifies that
+# information about the regressor
+encoding_size: 128 # should be the same as the encoding
+regressor_hidden_size_1: 64
+regressor_hidden_size_2: 64
+loss: "MSE"
+
+# The number of epochs the MLP is supposed to be trained
+epochs: 100
+
+# information about the sp specified by the exp/run
 sensor_processing: 'ConvVaeSensorProcessing'
 sp_experiment: 'sensorprocessing_conv_vae'
 sp_run: 'proprio_128'
-
-# this should be the same one as the sp
-encoding_size: 256
-regressor_hidden_size_1: 64
-regressor_hidden_size_2: 64
-# this should be somehow picked from the regular config
-output_size: 6
-
-proprioception_training_task: 'proprio_regressor_training'
-proprioception_testing_task: 'proprio_regressor_validation'
-# The number of epochs the MLP is supposed to be trained
-epochs: 30

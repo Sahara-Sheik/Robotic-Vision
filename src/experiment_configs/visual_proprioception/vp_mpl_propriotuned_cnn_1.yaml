@@ -1,6 +1,3 @@
-# This is a baseline, and it is designed to run quickly for 
-# debugging.
-
 # information about the training task
 output_size: 6
 proprioception_training_task: 'proprio_regressor_training'
