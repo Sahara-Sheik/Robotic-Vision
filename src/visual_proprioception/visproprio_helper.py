@@ -80,7 +80,7 @@ def load_demonstrations_as_proprioception_training(sp, task, proprioception_inpu
     return retval
 
 
-def get_visual_proprioception_sp(exp):
+def get_visual_proprioception_sp(exp, device):
     """Gets the sensor processing component specified by the 
     visual_proprioception experiment."""
     if exp["sensor_processing"] == "ConvVaeSensorProcessing":
