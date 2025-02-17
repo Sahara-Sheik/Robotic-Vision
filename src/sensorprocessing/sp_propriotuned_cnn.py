@@ -152,3 +152,36 @@ class ResNetProprioTunedRegression(nn.Module):
         return latent
     
         
+class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
+    """Sensor processing using a pre-trained architecture from above.
+    
+    WOULD THIS BE TOTALLY IDENTICAL TO THE VGG19 ones?
+    
+    """
+
+    def __init__(self, exp, device="cpu"):
+        """Create the sensormodel """
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+        self.exp = exp
+        self.enc = ResNetProprioTunedRegression(exp, device)
+        modelfile = pathlib.Path(exp["data_dir"], 
+                                exp["proprioception_mlp_model_file"])
+        assert modelfile.exists()
+        self.enc.load_state_dict(torch.load(modelfile))
+
+    def process(self, sensor_readings):
+        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
+        Returns the z encoding in the form of a numpy array."""
+        print(f"sensor readings shape {sensor_readings.shape}")
+        with torch.no_grad():
+            z = self.enc.encode(sensor_readings)
+        z = torch.squeeze(z)
+        return z.cpu().numpy()
+    
+    def process_file(self, sensor_readings_file):
+        """Processs the sensor readings directly from the file"""
+        sensor_readings, _ = load_picturefile_to_tensor(sensor_readings_file, self.transform)
+        output = self.process(sensor_readings)
+        return output
