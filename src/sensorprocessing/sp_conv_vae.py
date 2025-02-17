@@ -50,8 +50,9 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         # build model architecture
         self.model = self.vae_config.init_obj('arch', module_arch)
         self.loss_fn = getattr(module_loss, self.vae_config['loss'])
-        # loading the checkpoint
-        self.checkpoint = torch.load(self.vae_config.resume, map_location=torch.device('cpu'))
+        # loading the checkpoint, have to set weights_only false here
+        self.checkpoint = torch.load(self.vae_config.resume, 
+                                     weights_only = False, map_location=torch.device('cpu'))
         self.state_dict = self.checkpoint['state_dict']
         self.model.load_state_dict(self.state_dict)
         # prepare model for testing

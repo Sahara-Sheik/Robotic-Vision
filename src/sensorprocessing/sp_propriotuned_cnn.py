@@ -61,15 +61,13 @@ class VGG19ProprioTunedRegression(nn.Module):
         h2 = self.model[1](h1)
         h3 = self.model[2](h2)
         return h3
-        
+
 
 class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained VGG19 architecture from above."""
 
     def __init__(self, exp, device="cpu"):
         """Create the sensormodel """
-        # self.transform = get_transform_to_robot()
-        # FIXME: I think that this was trained on different size...
         self.transform = transforms.Compose([
             transforms.ToTensor(),
         ])
@@ -97,5 +95,60 @@ class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
         sensor_readings, _ = load_picturefile_to_tensor(sensor_readings_file, self.transform)
         output = self.process(sensor_readings)
         return output
+
+
+class ResNetProprioTunedRegression(nn.Module):
+    """Neural network used to create a latent embedding. Starts with a ResNet neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception. 
+    
+    When used for encoding, the processing happens only to an internal layer in the MLP.
+    """
+
+    def __init__(self, exp, device):
+        super(ResNetProprioTunedRegression, self).__init__()
+        resnet = models.resnet50(pretrained=True)
+        # Create the feature extractor by removing the last fully 
+        # connected layer of the resnet (fc)
+        self.feature_extractor = torch.nn.Sequential(*list(self.resnet.children())[:-1])
+        # freeze the parameters of the feature extractor
+        if exp["freeze_feature_extractor"]:
+            for param in self.cnnmodel.parameters():
+                param.requires_grad = False        
+
+        # the reductor component
+        self.reductor = nn.Sequential(
+            nn.Linear(resnet.in_features, exp["reductor_step_1"]),
+            nn.ReLU(),
+            nn.Linear(exp["reductor_step_1"], exp["latent_dims"])
+        )
+
+        # the proprioceptor auxiliary training component
+        # not used in inference
+        self.proprioceptor = nn.Sequential(
+            nn.Linear(exp["latent_dims"], exp["proprio_step_1"]),
+            nn.ReLU(),
+            nn.Linear(exp["proprio_step_1"], exp["proprio_step_2"]),
+            nn.ReLU(),
+            nn.Linear(exp["proprio_step_2"], exp["output_size"])
+        )
+
+        # Move the whole thing to the GPU if available
+        self.feature_extractor.to(device)
+        self.reductor.to(device)
+        self.proprioceptor.to(device)
+
+    def forward(self, x):
+        """Forward the input image through the complete network for the purposes of training using the proprioception. Return a vector of output_size which """
+        features = self.feature_extractor(x)
+        #print(features.shape)
+        latent = self.reductor(features)
+        output = self.proprioceptor(latent)
+        # print(output.device)
+        return output
+    
+    def encode(self, x):
+        """Performs an encoding of the input image, by forwarding though the encoding and first three layers."""
+        features = self.feature_extractor(x)
+        latent = self.reductor(features)
+        return latent
     
         
