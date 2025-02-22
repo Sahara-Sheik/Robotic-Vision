@@ -3,24 +3,30 @@ sys.path.append("..")
 from settings import Config
 
 import numpy as np
+from torchvision import transforms
 from .sp_helper import load_picturefile_to_tensor
 
 
 class AbstractSensorProcessing:
-    """The ancestor of all the classes that perform a sensor processing"""
+    """The ancestor of all the classes that perform a sensor processing. We make the assumption that all these classes are configured by an experiment/run, and take in an image"""
 
-    def process(self, sensor_readings):
-        """Processes the sensor input and returns the latent encoding, which is a vector of the size of the latent encoding. 
+    def __init__(self, exp, device):
+        self.exp = exp
+        self.device = device
+        self.transform = transforms.Compose([
+          transforms.ToTensor(),
+        ])        
+        self.latent_size = exp["latent_size"]
+
+    def process(self, sensor_image):
+        """Processes the sensor_image (which is assumed to be an image) and returns the latent encoding. Returns zero here, it must be overwritten in inherited models. 
         This is intended to be used during real-time deployment"""
-        return np.zeros(Config().values["robot"]["latent_encoding_size"])
+        return np.zeros(self.latent_size)
 
-    #def process_file(self, sensor_readings_file):
-    #    """Assumes that the sensor readings are in a file (eg. a picture). The format of the file is up to the particular processing, and it might be a directory to a miscellaneous set of readings. Processes the sensor input and returns the latent encoding, which is a vector of the size of the latent encoding. 
-    #    This is intended to be used during training. """
-    #    return np.zeros(Config().values["robot"]["latent_encoding_size"])
-
-    def process_file(self, sensor_readings_file):
-        """Processsed file"""
-        sensor_readings, image = load_picturefile_to_tensor(sensor_readings_file, self.transform)
+    def process_file(self, sensor_image_file):
+        """Processes the sensor image from a file. This probably does not need to be overwritten. 
+        """
+        sensor_readings, _ = load_picturefile_to_tensor(sensor_image_file, self.transform)
         output = self.process(sensor_readings)
         return output
+

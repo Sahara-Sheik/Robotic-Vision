@@ -23,7 +23,7 @@ class VGG19ProprioTunedRegression(nn.Module):
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
-    def __init__(self, hidden_size, output_size):
+    def __init__(self, latent_size, output_size):
 
         super(VGG19ProprioTunedRegression, self).__init__()
         vgg19 = models.vgg19(pretrained=True)
@@ -33,11 +33,11 @@ class VGG19ProprioTunedRegression(nn.Module):
             # The internal size seem to depend on the external size. 
             # the original with 7 * 7 corresponded to the 224 x 224 inputs
             #nn.Linear(512 * 7 * 7, hidden_size),
-            nn.Linear(512 * 8 * 8, hidden_size),
+            nn.Linear(512 * 8 * 8, latent_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
+            nn.Linear(latent_size, latent_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, output_size)
+            nn.Linear(latent_size, output_size)
         )
         # freeze the parameters of the feature extractor
         for param in self.feature_extractor.parameters():
@@ -68,13 +68,9 @@ class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
 
     def __init__(self, exp, device="cpu"):
         """Create the sensormodel """
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-        self.exp = exp
-        hidden_size = exp["latent_dims"]
+        super().__init__(exp, device)
         output_size = Config()["robot"]["action_space_size"]
-        self.enc = VGG19ProprioTunedRegression(hidden_size=hidden_size, output_size=output_size)
+        self.enc = VGG19ProprioTunedRegression(latent_size=latent_size, output_size=output_size)
         self.enc = self.enc.to(device)
         modelfile = pathlib.Path(exp["data_dir"], 
                                 exp["proprioception_mlp_model_file"])
@@ -90,11 +86,11 @@ class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
         z = torch.squeeze(z)
         return z.cpu().numpy()
     
-    def process_file(self, sensor_readings_file):
-        """Processs the sensor readings directly from the file"""
-        sensor_readings, _ = load_picturefile_to_tensor(sensor_readings_file, self.transform)
-        output = self.process(sensor_readings)
-        return output
+    #def process_file(self, sensor_readings_file):
+    #    """Processs the sensor readings directly from the file"""
+    #    sensor_readings, _ = load_picturefile_to_tensor(sensor_readings_file, self.transform)
+    #    output = self.process(sensor_readings)
+    #    return output
 
 
 class ResNetProprioTunedRegression(nn.Module):
@@ -161,9 +157,7 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
 
     def __init__(self, exp, device="cpu"):
         """Create the sensormodel """
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
+        super().__init__(exp, device)
         self.exp = exp
         self.enc = ResNetProprioTunedRegression(exp, device)
         modelfile = pathlib.Path(exp["data_dir"], 
@@ -180,8 +174,3 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
         z = torch.squeeze(z)
         return z.cpu().numpy()
     
-    def process_file(self, sensor_readings_file):
-        """Processs the sensor readings directly from the file"""
-        sensor_readings, _ = load_picturefile_to_tensor(sensor_readings_file, self.transform)
-        output = self.process(sensor_readings)
-        return output

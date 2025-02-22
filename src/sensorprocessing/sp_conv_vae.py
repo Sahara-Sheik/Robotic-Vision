@@ -36,8 +36,9 @@ from .sensor_processing import AbstractSensorProcessing
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
     """Sensor processing based on a pre-trained Conv-VAE"""
 
-    def __init__(self, exp):
+    def __init__(self, exp, device):
         """Restore a pre-trained model based on the configuration json file and the model file"""
+        super().__init__(exp)
         model_subdir = Path(exp["data_dir"], exp["model_dir"], "models", exp["model_name"], exp["model_subdir"])
         self.conv_vae_jsonfile = Path(model_subdir, "config.json")
         self.resume_model_pthfile = Path(model_subdir, exp["model_checkpoint"])
@@ -56,8 +57,8 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         self.state_dict = self.checkpoint['state_dict']
         self.model.load_state_dict(self.state_dict)
         # prepare model for testing
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model = self.model.to(device)
+        # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = self.model.to(self.device)
         self.model.eval()
         self.transform = get_transform_to_robot()
 
