@@ -10,7 +10,7 @@ import numpy as np
 from settings import Config
 from behavior_cloning.demo_to_trainingdata import BCDemonstration
 from robot.al5d_position_controller import RobotPosition
-from sensorprocessing import sp_conv_vae, sp_propriotuned_cnn
+from sensorprocessing import sp_conv_vae, sp_propriotuned_cnn, sp_aruco
 
 def load_demonstrations_as_proprioception_training(sp, task, proprioception_input_file, proprioception_target_file):
     """
@@ -83,14 +83,13 @@ def load_demonstrations_as_proprioception_training(sp, task, proprioception_inpu
 def get_visual_proprioception_sp(exp, device):
     """Gets the sensor processing component specified by the 
     visual_proprioception experiment."""
+    spexp = Config().get_experiment(exp['sp_experiment'], exp['sp_run'])
     if exp["sensor_processing"] == "ConvVaeSensorProcessing":
-        spexp = Config().get_experiment(
-            exp['sp_experiment'], exp['sp_run'])
-        sp = sp_conv_vae.ConvVaeSensorProcessing(spexp)
-        return sp
-    elif exp['sensor_processing']=="VGG19ProprioTunedSensorProcessing":
-        spexp = Config().get_experiment(exp['sp_experiment'], exp['sp_run'])
-        sp = sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
-        return sp
-    else:
-        raise Exception('Unknown sensor processing {exp["sensor_processing"]}')
+        return sp_conv_vae.ConvVaeSensorProcessing(spexp)
+    if exp['sensor_processing']=="VGG19ProprioTunedSensorProcessing":
+        return sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
+    if exp['sensor_processing']=="ResNetProprioTunedSensorProcessing":
+        return sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing(spexp, device)
+    if exp['sensor_processing']=="ResNetProprioTunedSensorProcessing":
+        return sp_aruco.ArucoSensorProcessing(exp, device)
+    raise Exception('Unknown sensor processing {exp["sensor_processing"]}')

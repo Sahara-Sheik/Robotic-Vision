@@ -101,18 +101,19 @@ class ResNetProprioTunedRegression(nn.Module):
 
     def __init__(self, exp, device):
         super(ResNetProprioTunedRegression, self).__init__()
-        resnet = models.resnet50(pretrained=True)
+        self.resnet = models.resnet50(pretrained=True)
         # Create the feature extractor by removing the last fully 
         # connected layer of the resnet (fc)
         self.feature_extractor = torch.nn.Sequential(*list(self.resnet.children())[:-1])
         # freeze the parameters of the feature extractor
         if exp["freeze_feature_extractor"]:
-            for param in self.cnnmodel.parameters():
+            for param in self.resnet.parameters():
                 param.requires_grad = False        
 
+        self.flatten = nn.Flatten()  # Flatten the output for the fully
         # the reductor component
         self.reductor = nn.Sequential(
-            nn.Linear(resnet.in_features, exp["reductor_step_1"]),
+            nn.Linear(self.resnet.fc.in_features, exp["reductor_step_1"]),
             nn.ReLU(),
             nn.Linear(exp["reductor_step_1"], exp["latent_size"])
         )
@@ -135,8 +136,9 @@ class ResNetProprioTunedRegression(nn.Module):
     def forward(self, x):
         """Forward the input image through the complete network for the purposes of training using the proprioception. Return a vector of output_size which """
         features = self.feature_extractor(x)
-        #print(features.shape)
-        latent = self.reductor(features)
+        # print(f"Features shape {features.shape}")
+        flatfeatures = self.flatten(features)
+        latent = self.reductor(flatfeatures)
         output = self.proprioceptor(latent)
         # print(output.device)
         return output
