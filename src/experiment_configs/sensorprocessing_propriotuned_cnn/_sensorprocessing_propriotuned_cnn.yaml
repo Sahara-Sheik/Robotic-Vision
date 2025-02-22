@@ -1,4 +1,4 @@
-latent_dims: 128
+latent_size: 128
 model_name: 'VGG-19'
 
 proprioception_mlp_model_file: 'proprioception_mlp.pth'

@@ -114,13 +114,13 @@ class ResNetProprioTunedRegression(nn.Module):
         self.reductor = nn.Sequential(
             nn.Linear(resnet.in_features, exp["reductor_step_1"]),
             nn.ReLU(),
-            nn.Linear(exp["reductor_step_1"], exp["latent_dims"])
+            nn.Linear(exp["reductor_step_1"], exp["latent_size"])
         )
 
         # the proprioceptor auxiliary training component
         # not used in inference
         self.proprioceptor = nn.Sequential(
-            nn.Linear(exp["latent_dims"], exp["proprio_step_1"]),
+            nn.Linear(exp["latent_size"], exp["proprio_step_1"]),
             nn.ReLU(),
             nn.Linear(exp["proprio_step_1"], exp["proprio_step_2"]),
             nn.ReLU(),

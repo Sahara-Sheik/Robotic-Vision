@@ -1,13 +1,11 @@
 # This run creates a conv_vae encoding of width 128, planned for the 
 # visual proprioception experiments
 
-latent_dims: 128
+latent_size: 128
 training_task: 'proprio_sp_training' 
 epochs: 200
 
-# on lotzi_yoga
-# validation_task: 'proprio_sp_validation'
-# validation_demo: '2024_12_26__16_44_06'
+
 
 # on tredy and szenes
 validation_task: 'proprio_sp_validation'

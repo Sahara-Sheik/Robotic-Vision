@@ -1,5 +1,5 @@
 # Note, this overwrites the original 128
-latent_dims: 256
+latent_size: 256
 
 # these will be filled in later... 
 model_subdir: '0116_135527'

@@ -10,12 +10,6 @@ from settings import Config
 from .sensor_processing import AbstractSensorProcessing
 from .sp_helper import get_transform_to_robot, load_picturefile_to_tensor
 
-#import pathlib
-#import torch
-#import torch.nn as nn
-#from torchvision import models
-#from torchvision import transforms
-
 import numpy as np
 import cv2
 

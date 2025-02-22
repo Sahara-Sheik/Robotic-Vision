@@ -15,7 +15,7 @@ class AbstractSensorProcessing:
         self.device = device
         self.transform = transforms.Compose([
           transforms.ToTensor(),
-        ])        
+        ])
         self.latent_size = exp["latent_size"]
 
     def process(self, sensor_image):
