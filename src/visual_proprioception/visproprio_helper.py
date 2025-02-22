@@ -79,3 +79,18 @@ def load_demonstrations_as_proprioception_training(sp, task, proprioception_inpu
 
     return retval
 
+
+def get_visual_proprioception_sp(exp, device):
+    """Gets the sensor processing component specified by the 
+    visual_proprioception experiment."""
+    if exp["sensor_processing"] == "ConvVaeSensorProcessing":
+        spexp = Config().get_experiment(
+            exp['sp_experiment'], exp['sp_run'])
+        sp = sp_conv_vae.ConvVaeSensorProcessing(spexp)
+        return sp
+    elif exp['sensor_processing']=="VGG19ProprioTunedSensorProcessing":
+        spexp = Config().get_experiment(exp['sp_experiment'], exp['sp_run'])
+        sp = sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
+        return sp
+    else:
+        raise Exception('Unknown sensor processing {exp["sensor_processing"]}')

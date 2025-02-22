@@ -75,6 +75,7 @@ class Config:
         data_dir = Path(self.values["experiment_data"], group_name, run_name)
         data_dir.mkdir(exist_ok=True, parents=True)
         indep_config["data_dir"] = data_dir
+        indep_config["exp_run_sys_indep_file"] = experiment_run_indep
         #
         # Load the system dependent run configuration
         #
@@ -87,6 +88,7 @@ class Config:
             with experiment_sys_dep.open("rt") as handle:
                 dep_config = yaml.safe_load(handle)
             exp_config = indep_config | dep_config
+            exp_config["exp_run_sys_dep_file"] = experiment_sys_dep
 
         print(f"Configuration for experiment: {group_name}/{run_name} successfully loaded", flush=True)
 
