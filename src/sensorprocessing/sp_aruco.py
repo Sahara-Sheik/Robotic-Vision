@@ -19,7 +19,7 @@ class ArucoSensorProcessing(AbstractSensorProcessing):
 
     def __init__(self, exp, device="cpu"):
         """Create the sensormodel """
-        super().init(exp, device)
+        super().__init__(exp, device)
         self.arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100)
         self.arucoParams = cv2.aruco.DetectorParameters()
         self.MARKER_COUNT = exp["MARKER_COUNT"]
@@ -32,15 +32,23 @@ class ArucoSensorProcessing(AbstractSensorProcessing):
 
     def process(self, sensor_image):
         """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor."""
+        print(sensor_image.shape)
+        # Convert to NumPy and rearrange dimensions
+        numpy_image = sensor_image[0].permute(1, 2, 0).cpu().numpy()  # Convert to (H, W, C)
+
+        # Convert from float [0,1] to uint8 [0,255]
+        numpy_image = (numpy_image * 255).astype(np.uint8)
+
         marker_corners, marker_ids, rejected_candidates = cv2.aruco.detectMarkers(
-                sensor_image, self.arucoDict, 
+                numpy_image, self.arucoDict, 
                 parameters=self.arucoParams)
 
         z = np.ones(self.latent_size) * -1.0
-        for id, corners in zip(marker_ids, marker_corners):
-            detection = corners[0].flatten() / self.NORMALIZER
-            idn = id[0]
-            z[idn * (8+1):(idn+1) * (8+1)-2] = detection
-            z[(idn+1) * (8+1)-1] = 1.0 # mark the fact that it is present
+        if marker_ids is not None:
+            for id, corners in zip(marker_ids, marker_corners):
+                detection = corners[0].flatten() / self.NORMALIZER
+                idn = id[0]
+                z[idn * (8+1):(idn+1) * (8+1)-2] = detection
+                z[(idn+1) * (8+1)-1] = 1.0 # mark the fact that it is present
         return z
 
