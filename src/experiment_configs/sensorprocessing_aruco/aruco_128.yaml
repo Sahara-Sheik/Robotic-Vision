@@ -1,9 +1,6 @@
 latent_size: 128
 
 MARKER_COUNT: 10
-# To be frank, maybe this needs to be auto-detected
-XMAX: 1000
-YMAX:
 
 # on tredy and szenes, overwritten on LotziYoga
 validation_task: 'proprioception-aruco'

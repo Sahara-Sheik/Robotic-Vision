@@ -23,9 +23,6 @@ class ArucoSensorProcessing(AbstractSensorProcessing):
         self.arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100)
         self.arucoParams = cv2.aruco.DetectorParameters()
         self.MARKER_COUNT = exp["MARKER_COUNT"]
-        self.XMAX = exp["XMAX"]
-        self.YMAX = exp["YMAX"]
-        self.NORMALIZER = np.tile([self.XMAX, self.YMAX], 4)
         if self.latent_size < self.MARKER_COUNT * (8+1):
             raise Exception(f"Latent size {self.latent_size} too small for {self.MARKER_COUNT} markers!")
 
@@ -36,6 +33,10 @@ class ArucoSensorProcessing(AbstractSensorProcessing):
         # Convert to NumPy and rearrange dimensions
         numpy_image = sensor_image[0].permute(1, 2, 0).cpu().numpy()  # Convert to (H, W, C)
 
+        self.NORMALIZER = np.tile([numpy_image.shape[0], numpy_image.shape[1]], 4)
+        print(self.NORMALIZER)
+
+
         # Convert from float [0,1] to uint8 [0,255]
         numpy_image = (numpy_image * 255).astype(np.uint8)
 
@@ -43,12 +44,14 @@ class ArucoSensorProcessing(AbstractSensorProcessing):
                 numpy_image, self.arucoDict, 
                 parameters=self.arucoParams)
 
+        print(marker_corners)
+
         z = np.ones(self.latent_size) * -1.0
         if marker_ids is not None:
             for id, corners in zip(marker_ids, marker_corners):
                 detection = corners[0].flatten() / self.NORMALIZER
                 idn = id[0]
-                z[idn * (8+1):(idn+1) * (8+1)-2] = detection
+                z[idn * (8+1):(idn+1) * (8+1)-1] = detection
                 z[(idn+1) * (8+1)-1] = 1.0 # mark the fact that it is present
         return z
 
