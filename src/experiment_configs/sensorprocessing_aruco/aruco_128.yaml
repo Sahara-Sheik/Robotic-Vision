@@ -6,6 +6,8 @@ XMAX: 1000
 YMAX:
 
 # on tredy and szenes, overwritten on LotziYoga
-validation_task: 'proprio_sp_validation'
-validation_demo: '2024_10_26__16_23_22'
+validation_task: 'proprioception-aruco'
+#validation_demo: '2025_02_25__10_47_22'
+# validation_demo: '2025_02_25__11_02_02'
+validation_demo: 'test'
 
