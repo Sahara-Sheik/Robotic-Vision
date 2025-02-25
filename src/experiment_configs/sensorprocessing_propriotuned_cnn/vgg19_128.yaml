@@ -6,6 +6,7 @@ loss: 'MSELoss' # alternatively it could be L1Loss
 epochs: 10
 learning_rate: 0.001
 batch_size: 32
+output_size: 6
 
 freeze_feature_extractor: True
 

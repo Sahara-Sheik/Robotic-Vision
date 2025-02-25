@@ -70,7 +70,7 @@ class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
         """Create the sensormodel """
         super().__init__(exp, device)
         output_size = Config()["robot"]["action_space_size"]
-        self.enc = VGG19ProprioTunedRegression(latent_size=latent_size, output_size=output_size)
+        self.enc = VGG19ProprioTunedRegression(latent_size=exp["latent_size"], output_size=exp["output_size"])
         self.enc = self.enc.to(device)
         modelfile = pathlib.Path(exp["data_dir"], 
                                 exp["proprioception_mlp_model_file"])

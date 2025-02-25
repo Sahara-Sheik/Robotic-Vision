@@ -90,6 +90,6 @@ def get_visual_proprioception_sp(exp, device):
         return sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
     if exp['sensor_processing']=="ResNetProprioTunedSensorProcessing":
         return sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing(spexp, device)
-    if exp['sensor_processing']=="ResNetProprioTunedSensorProcessing":
-        return sp_aruco.ArucoSensorProcessing(exp, device)
+    if exp['sensor_processing']=="Aruco":
+        return sp_aruco.ArucoSensorProcessing(spexp, device)
     raise Exception('Unknown sensor processing {exp["sensor_processing"]}')
