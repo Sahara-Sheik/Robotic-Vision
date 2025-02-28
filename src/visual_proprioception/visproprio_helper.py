@@ -85,7 +85,7 @@ def get_visual_proprioception_sp(exp, device):
     visual_proprioception experiment."""
     spexp = Config().get_experiment(exp['sp_experiment'], exp['sp_run'])
     if exp["sensor_processing"] == "ConvVaeSensorProcessing":
-        return sp_conv_vae.ConvVaeSensorProcessing(spexp)
+        return sp_conv_vae.ConvVaeSensorProcessing(spexp, device)
     if exp['sensor_processing']=="VGG19ProprioTunedSensorProcessing":
         return sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
     if exp['sensor_processing']=="ResNetProprioTunedSensorProcessing":

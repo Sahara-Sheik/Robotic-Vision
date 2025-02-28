@@ -3,7 +3,7 @@
 
 latent_size: 128
 training_task: 'proprio_sp_training' 
-epochs: 200
+epochs: 300
 
 
 
