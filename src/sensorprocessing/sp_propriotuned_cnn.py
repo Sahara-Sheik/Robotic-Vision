@@ -23,9 +23,11 @@ class VGG19ProprioTunedRegression(nn.Module):
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
-    def __init__(self, latent_size, output_size):
-
-        super(VGG19ProprioTunedRegression, self).__init__()
+    def __init__(self, exp, device):
+        super().__init__()
+        self.latent_size = exp["latent_size"]
+        self.output_size = exp["output_size"]
+        # Pretrained vgg19
         vgg19 = models.vgg19(pretrained=True)
         self.feature_extractor = vgg19.features
         self.flatten = nn.Flatten()  # Flatten the output for the fully connected layer
@@ -33,15 +35,19 @@ class VGG19ProprioTunedRegression(nn.Module):
             # The internal size seem to depend on the external size. 
             # the original with 7 * 7 corresponded to the 224 x 224 inputs
             #nn.Linear(512 * 7 * 7, hidden_size),
-            nn.Linear(512 * 8 * 8, latent_size),
+            nn.Linear(512 * 8 * 8, self.latent_size),
             nn.ReLU(),
-            nn.Linear(latent_size, latent_size),
+            nn.Linear(self.latent_size, self.latent_size),
             nn.ReLU(),
-            nn.Linear(latent_size, output_size)
+            nn.Linear(self.latent_size, self.output_size)
         )
         # freeze the parameters of the feature extractor
         for param in self.feature_extractor.parameters():
             param.requires_grad = False        
+            # Move the whole thing to the GPU if available
+        self.feature_extractor.to(device)
+        self.model.to(device)
+
 
     def forward(self, x):
         """Forward the input image through the complete network for the purposes of training using the proprioception. Return a vector of output_size which """
@@ -63,35 +69,7 @@ class VGG19ProprioTunedRegression(nn.Module):
         return h3
 
 
-class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
-    """Sensor processing using a pre-trained VGG19 architecture from above."""
-
-    def __init__(self, exp, device="cpu"):
-        """Create the sensormodel """
-        super().__init__(exp, device)
-        output_size = Config()["robot"]["action_space_size"]
-        self.enc = VGG19ProprioTunedRegression(latent_size=exp["latent_size"], output_size=exp["output_size"])
-        self.enc = self.enc.to(device)
-        modelfile = pathlib.Path(exp["data_dir"], 
-                                exp["proprioception_mlp_model_file"])
-        assert modelfile.exists()
-        self.enc.load_state_dict(torch.load(modelfile))
-
-    def process(self, sensor_readings):
-        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
-        Returns the z encoding in the form of a numpy array."""
-        print(f"sensor readings shape {sensor_readings.shape}")
-        with torch.no_grad():
-            z = self.enc.encode(sensor_readings)
-        z = torch.squeeze(z)
-        return z.cpu().numpy()
     
-    #def process_file(self, sensor_readings_file):
-    #    """Processs the sensor readings directly from the file"""
-    #    sensor_readings, _ = load_picturefile_to_tensor(sensor_readings_file, self.transform)
-    #    output = self.process(sensor_readings)
-    #    return output
-
 
 class ResNetProprioTunedRegression(nn.Module):
     """Neural network used to create a latent embedding. Starts with a ResNet neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception. 
@@ -146,9 +124,12 @@ class ResNetProprioTunedRegression(nn.Module):
     def encode(self, x):
         """Performs an encoding of the input image, by forwarding though the encoding and first three layers."""
         features = self.feature_extractor(x)
-        latent = self.reductor(features)
+        flatfeatures = self.flatten(features)
+        latent = self.reductor(flatfeatures)
         return latent
     
+# FIXME: these are identical, differ only in the regression component, 
+# maybe can be merged together somehow.
         
 class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained architecture from above.
@@ -160,7 +141,7 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
     def __init__(self, exp, device="cpu"):
         """Create the sensormodel """
         super().__init__(exp, device)
-        self.exp = exp
+        # self.exp = exp
         self.enc = ResNetProprioTunedRegression(exp, device)
         modelfile = pathlib.Path(exp["data_dir"], 
                                 exp["proprioception_mlp_model_file"])
@@ -176,3 +157,24 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
         z = torch.squeeze(z)
         return z.cpu().numpy()
     
+class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
+    """Sensor processing using a pre-trained VGG19 architecture from above."""
+
+    def __init__(self, exp, device="cpu"):
+        """Create the sensormodel """
+        super().__init__(exp, device)
+        self.enc = VGG19ProprioTunedRegression(exp, device)
+        self.enc = self.enc.to(device)
+        modelfile = pathlib.Path(exp["data_dir"], 
+                                exp["proprioception_mlp_model_file"])
+        assert modelfile.exists()
+        self.enc.load_state_dict(torch.load(modelfile))
+
+    def process(self, sensor_readings):
+        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
+        Returns the z encoding in the form of a numpy array."""
+        print(f"sensor readings shape {sensor_readings.shape}")
+        with torch.no_grad():
+            z = self.enc.encode(sensor_readings)
+        z = torch.squeeze(z)
+        return z.cpu().numpy()
