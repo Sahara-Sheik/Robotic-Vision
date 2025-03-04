@@ -1,4 +1,3 @@
-# vgg19 00 
 name : 'vgg19-128'
 latent_size: 128
 model: 'VGG19ProprioTunedRegression'

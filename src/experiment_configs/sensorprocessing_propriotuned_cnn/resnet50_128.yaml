@@ -1,5 +1,8 @@
 # resnet-50 00 
-name : 'resnet-50'
+name : 'resnet-50-128'
+
+latent_size: 128
+
 
 reductor_step_1: 512
 proprio_step_1: 64

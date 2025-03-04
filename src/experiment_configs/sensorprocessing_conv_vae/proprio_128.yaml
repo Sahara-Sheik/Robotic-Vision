@@ -24,4 +24,4 @@ validation_demo: '2024_10_26__16_23_22'
 
 # on szenes
 model_subdir: '0216_111207'
-model_checkpoint: 'checkpoint-epoch200.pth'
+model_checkpoint: 'checkpoint-epoch300.pth'

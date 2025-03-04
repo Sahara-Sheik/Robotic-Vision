@@ -39,7 +39,7 @@ def load_demonstrations_as_proprioception_training(sp, task, proprioception_inpu
             if not demo_dir.is_dir():
                 pass
             bcd = BCDemonstration(demo_dir, sensorprocessor=sp)
-            print(bcd)
+            # print(bcd)
             z, a = bcd.read_z_a()
             # normalize the actions
             #print(z.shape)
