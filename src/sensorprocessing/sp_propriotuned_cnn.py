@@ -151,7 +151,7 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
     def process(self, sensor_readings):
         """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
         Returns the z encoding in the form of a numpy array."""
-        print(f"sensor readings shape {sensor_readings.shape}")
+        # print(f"sensor readings shape {sensor_readings.shape}")
         with torch.no_grad():
             z = self.enc.encode(sensor_readings)
         z = torch.squeeze(z)
@@ -173,7 +173,7 @@ class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
     def process(self, sensor_readings):
         """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
         Returns the z encoding in the form of a numpy array."""
-        print(f"sensor readings shape {sensor_readings.shape}")
+        # print(f"sensor readings shape {sensor_readings.shape}")
         with torch.no_grad():
             z = self.enc.encode(sensor_readings)
         z = torch.squeeze(z)

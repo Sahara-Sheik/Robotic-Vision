@@ -42,15 +42,15 @@ def load_demonstrations_as_proprioception_training(sp, task, proprioception_inpu
             print(bcd)
             z, a = bcd.read_z_a()
             # normalize the actions
-            print(z.shape)
-            print(a.shape)
+            #print(z.shape)
+            #print(a.shape)
             anorm = np.zeros(a.shape, np.float32)
             for i in range(a.shape[0]):
                 rp = RobotPosition.from_vector(a[i])
                 anorm[i,:] = rp.to_normalized_vector()        
             # FIXME the repeated name for inputs and targets
-            print(z.shape)
-            print(anorm.shape)
+            #print(z.shape)
+            #print(anorm.shape)
 
             for i in range(z.shape[0]):
                 inp = torch.from_numpy(z[i])
