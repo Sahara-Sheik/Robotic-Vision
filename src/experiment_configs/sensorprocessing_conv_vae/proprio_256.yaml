@@ -7,7 +7,7 @@ epochs: 300
 
 
 
-# on tredy and szenes
+# on t and s
 validation_task: 'proprio_sp_validation'
 validation_demo: '2024_10_26__16_23_22'
 

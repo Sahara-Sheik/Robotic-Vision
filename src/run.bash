@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Define the notebook file and output directory
-NOTEBOOK="/BerryPicker/src/visual_proprioception/Train_VisualProprioception.ipynb"
+NOTEBOOK="/AnonymousProject/src/visual_proprioception/Train_VisualProprioception.ipynb"
 OUTPUT_DIR="output_runs"
 mkdir -p $OUTPUT_DIR
-export PYTHONPATH="/BerryPicker/src/:$PYTHONPATH"
+export PYTHONPATH="/AnonymousProject/src/:$PYTHONPATH"
 
 
 # List of different values for the 'run' variable

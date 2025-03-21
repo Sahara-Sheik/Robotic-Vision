@@ -1,18 +1,18 @@
 """
-This file contains settings for the BerryPicker project. These can be considered as constants for a particular run, but they might have different values on different computers or setups.
+This file contains settings for the AnonymousProject project. These can be considered as constants for a particular run, but they might have different values on different computers or setups.
 
 They should be accessed through Config().values["value"]
 
-A configuration system that allows porting between different machines and the use of multiple configuration files. 
+A configuration system that allows porting between different machines and the use of multiple configuration files.
 
-It starts by loading a file from ~/.config/BerryPicker/mainsettings.yaml" 
-from where the "configpath" property points to the path of the 
-actual configuration file. 
+It starts by loading a file from ~/.config/AnonymousProject/mainsettings.yaml"
+from where the "configpath" property points to the path of the
+actual configuration file.
 
 Template configuration files FIXME and mainsettings-sample.yaml are in top directory of the project. However, the actual configuration files should be on the local directory outside the github package, as these configuration files contain local information such as user directory names etc.
 
-The configuration values are a hierarchical dictionary which can be 
-accessed  should be accessed through Config()["value"] or 
+The configuration values are a hierarchical dictionary which can be
+accessed  should be accessed through Config()["value"] or
 Config()["group"]["value"]
 
 
@@ -29,7 +29,7 @@ class Config:
         if not cls._instance:
             cls._instance = super(Config, cls).__new__(cls)
             home_directory = Path.home()
-            main_config = Path(home_directory, ".config", "BerryPicker","mainsettings.yaml")
+            main_config = Path(home_directory, ".config", "AnonymousProject","mainsettings.yaml")
             print(f"Loading pointer config file: {main_config}")
             if not main_config.exists():
                 raise Exception(f"Missing pointer config file: {main_config}")
@@ -46,9 +46,9 @@ class Config:
 
     def __getitem__(self, key):
         return self.values[key]
-    
+
     def get_experiment(self, group_name, run_name):
-        """Returns an experiment configuration, which is the 
+        """Returns an experiment configuration, which is the
         mixture between the system-dependent configuration and the system independent configuration."""
         current_directory = Path(__file__).resolve().parent
         #
@@ -59,7 +59,7 @@ class Config:
             raise Exception(f"Missing experiment group config {experiment_group_indep}")
         with experiment_group_indep.open("rt") as handle:
             group_config = yaml.safe_load(handle)
-        
+
         group_config["group_name"] = group_name
         #
         # Load the system independent run configuration
@@ -84,7 +84,7 @@ class Config:
         if not experiment_sys_dep.exists():
             print(f"No system dependent experiment file\n {experiment_sys_dep},\n that is ok, proceeding.")
             exp_config = indep_config
-        else: 
+        else:
             with experiment_sys_dep.open("rt") as handle:
                 dep_config = yaml.safe_load(handle)
             exp_config = indep_config | dep_config
