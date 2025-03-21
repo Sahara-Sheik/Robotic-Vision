@@ -1,1 +1,0 @@
-Text written for the earlier incarnation of this code in 2021, moved here in April 2024. Some part of this might be useful as starting point for new code. 
