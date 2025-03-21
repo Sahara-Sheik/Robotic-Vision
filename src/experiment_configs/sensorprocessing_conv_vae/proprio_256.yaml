@@ -14,15 +14,15 @@ validation_demo: '2024_10_26__16_23_22'
 # These values need to be added _after_ training because they
 # are created in an unpredictable location by the library
 
-# on lotzi-yoga
+# on l
 # model_subdir: '0209_133250'
 # model_checkpoint: 'checkpoint-epoch10.pth'
 
-# on tredy
+# on t
 #model_subdir: '0212_112115'
 #model_checkpoint: 'checkpoint-epoch200.pth'
 
-# on szenes
+# on s
 # model_subdir: '0313_142510'   ########### this was for cam3
 
 model_subdir: '0314_014813'
