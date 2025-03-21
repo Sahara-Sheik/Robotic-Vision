@@ -1,8 +1,9 @@
 name: "ptun-vgg19-128"
 # information about the training task
 output_size: 6
-proprioception_training_task: 'proprio_regressor_training'
-proprioception_testing_task: 'proprio_regressor_validation'
+proprioception_training_task: 'proprio_sp_training'
+proprioception_testing_task: 'proprio_sp_validation'
+
 
 # information about the regressor
 encoding_size: 128 # should be the same as the encoding
@@ -15,6 +16,15 @@ epochs: 1000
 
 # information about the sp specified by the exp/run
 sensor_processing: 'VGG19ProprioTunedSensorProcessing'
+# model: 'VGG19ProprioTunedRegression'
+# # loss: 'MSELoss' # alternatively it could be L1Loss
+# learning_rate: 0.001
+# batch_size: 32
+# latent_size: 128
+
+
+
+##########################
 sp_experiment: 'sensorprocessing_propriotuned_cnn'
 sp_run: 'vgg19_128'
 

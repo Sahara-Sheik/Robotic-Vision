@@ -40,10 +40,14 @@ class ArucoSensorProcessing(AbstractSensorProcessing):
         # Convert from float [0,1] to uint8 [0,255]
         numpy_image = (numpy_image * 255).astype(np.uint8)
 
-        marker_corners, marker_ids, rejected_candidates = cv2.aruco.detectMarkers(
-                numpy_image, self.arucoDict, 
-                parameters=self.arucoParams)
+     ##### Sahara Modification ##################
+        detector = cv2.aruco.ArucoDetector(self.arucoDict, self.arucoParams)
+        marker_corners, marker_ids, rejected_candidates = detector.detectMarkers(numpy_image)
 
+        # marker_corners, marker_ids, rejected_candidates = cv2.aruco.detectMarkers(
+        #         numpy_image, self.arucoDict,
+        #         parameters=self.arucoParams)
+    ###### Sahara modification ends here ###########
         print(marker_corners)
 
         z = np.ones(self.latent_size) * -1.0

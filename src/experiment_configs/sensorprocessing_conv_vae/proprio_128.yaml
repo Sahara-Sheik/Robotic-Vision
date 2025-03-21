@@ -1,8 +1,8 @@
-# This run creates a conv_vae encoding of width 128, planned for the 
+# This run creates a conv_vae encoding of width 128, planned for the
 # visual proprioception experiments
 
 latent_size: 128
-training_task: 'proprio_sp_training' 
+training_task: 'proprio_sp_training'
 epochs: 300
 
 
@@ -11,7 +11,7 @@ epochs: 300
 validation_task: 'proprio_sp_validation'
 validation_demo: '2024_10_26__16_23_22'
 
-# These values need to be added _after_ training because they 
+# These values need to be added _after_ training because they
 # are created in an unpredictable location by the library
 
 # on lotzi-yoga
@@ -23,5 +23,6 @@ validation_demo: '2024_10_26__16_23_22'
 #model_checkpoint: 'checkpoint-epoch200.pth'
 
 # on szenes
-model_subdir: '0216_111207'
+# model_subdir: '0313_151618'  ## this was for cam 3
+model_subdir: '0314_003916'  ## this was for cam 2
 model_checkpoint: 'checkpoint-epoch300.pth'

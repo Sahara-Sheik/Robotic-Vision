@@ -1,4 +1,4 @@
-# resnet-50 00 
+# resnet-50 00
 name : 'resnet-50-256'
 
 latent_size: 256
@@ -10,8 +10,8 @@ output_size: 6
 
 model: 'ResNetProprioTunedRegression'
 loss: 'MSELoss' # alternatively it could be L1Loss
-epochs: 100
-learning_rate: 0.002
+epochs: 300
+learning_rate: 0.001
 batch_size: 32
 # batch_size: 1
 

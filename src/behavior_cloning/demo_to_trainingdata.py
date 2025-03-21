@@ -1,7 +1,7 @@
 """
 demo_to_trainingdata.py
 
-Create training data from demonstrations. 
+Create training data from demonstrations.
 """
 import sys
 sys.path.append("..")
@@ -16,7 +16,7 @@ from sensorprocessing.sp_helper import load_picturefile_to_tensor
 
 
 def create_RNN_training_sequence_xy(x_seq, y_seq, sequence_length):
-    """Create supervised training data for RNNs such as LSTM from two sequences. In this data, from a string of length sequence_length in x_seq we are predicting the next item in y_seq. 
+    """Create supervised training data for RNNs such as LSTM from two sequences. In this data, from a string of length sequence_length in x_seq we are predicting the next item in y_seq.
     Returns the results as tensors
     """
     # Prepare training data
@@ -25,13 +25,13 @@ def create_RNN_training_sequence_xy(x_seq, y_seq, sequence_length):
     targets = []
     for i in range(total_length - sequence_length):
         # Input is a subsequence of length `sequence_length`
-        input_seq = x_seq[i:i + sequence_length]  
+        input_seq = x_seq[i:i + sequence_length]
         # Shape: [sequence_length, latent_size]
-        
+
         # Target is the next vector after the input sequence
-        target = y_seq[i + sequence_length]       
+        target = y_seq[i + sequence_length]
         # Shape: [output_size]
-        
+
         # Append to lists
         inputs.append(torch.tensor(input_seq))
         targets.append(torch.tensor(target))
@@ -47,12 +47,12 @@ def create_RNN_training_sequence_xy(x_seq, y_seq, sequence_length):
 
 class BCDemonstration:
     """This class encapsulates loading a demonstration with the intention to convert it into training data.
-    
-    This code is a training helper which encapsulates one behavior cloning demonstration, which is a sequence of form $\{(s_0, a_0), ...(s_n, a_n)\}$. 
+
+    This code is a training helper which encapsulates one behavior cloning demonstration, which is a sequence of form $\{(s_0, a_0), ...(s_n, a_n)\}$.
 
     In practice, however, we want to create a demonstration that maps the latent encodings to actions $\{(z_0, a_0), ...(z_n, a_n)\}$
-    
-    The transformation of $s \rightarrow z$ is done through an object of type  AbstractSensorProcessing. 
+
+    The transformation of $s \rightarrow z$ is done through an object of type  AbstractSensorProcessing.
 
     In a practical way, the source of information for a BC demonstration is a demonstration directory, and the saved robot control there.
     """
@@ -64,7 +64,7 @@ class BCDemonstration:
         self.actiontype = actiontype
         # analyze the directory
         self.cameras, self.maxsteps = helper.analyze_demo(source_dir)
-        # analyze 
+        # analyze
         if camera is None:
             self.camera = self.cameras[0]
         else:
@@ -72,15 +72,20 @@ class BCDemonstration:
         # read in _demonstration.json, load the trim values
         with open(pathlib.Path(self.source_dir, "_demonstration.json")) as file:
             data = json.load(file)
-        self.trim_from = data["trim-from"]
-        self.trim_to = data["trim-to"]
-        if self.trim_to == -1:
-            self.trim_to = self.maxsteps
+        self.trim_to = self.maxsteps
+        #### sahara added this *** Ask Dr. Boloni if he wants us to pass this in yml
+        self.trim_from = 1
+
+        # self.trim_from = data["trim-from"]
+        # self.trim_to = data["trim-to"]
+        # if self.trim_to == -1:
+        #     self.trim_to = self.maxsteps
 
     def read_z_a(self):
         """Reads in the demonstrations for z and a and returns them in the form of float32 numpy arrays"""
         z = []
         a = []
+
         for i in range(self.trim_from, self.trim_to):
             zval = self.get_z(i)
             # print(zval.cpu())
@@ -96,15 +101,15 @@ class BCDemonstration:
         filepath = pathlib.Path(self.source_dir, f"{i:05d}_{self.camera}.jpg")
         val = self.sensorprocessor.process_file(filepath)
         return val
-    
+
     def get_image(self, i, transform = None):
         """Gets the image as a torch batch"""
         filepath = pathlib.Path(self.source_dir, f"{i:05d}_{self.camera}.jpg")
         sensor_readings, image = load_picturefile_to_tensor(filepath, transform)
         return sensor_readings, image
-        
+
     def get_a(self, i):
-        filepath = pathlib.Path(self.source_dir, f"{i:05d}.json") 
+        filepath = pathlib.Path(self.source_dir, f"{i:05d}.json")
         with open(filepath) as file:
             data = json.load(file)
         if self.actiontype == "rc-position-target":

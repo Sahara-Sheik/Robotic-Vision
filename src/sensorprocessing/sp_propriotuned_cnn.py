@@ -18,8 +18,8 @@ from torchvision import transforms
 
 
 class VGG19ProprioTunedRegression(nn.Module):
-    """Neural network used to create a latent embedding. Starts with a VGG19 neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception. 
-    
+    """Neural network used to create a latent embedding. Starts with a VGG19 neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception.
+
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
@@ -32,7 +32,7 @@ class VGG19ProprioTunedRegression(nn.Module):
         self.feature_extractor = vgg19.features
         self.flatten = nn.Flatten()  # Flatten the output for the fully connected layer
         self.model = nn.Sequential(
-            # The internal size seem to depend on the external size. 
+            # The internal size seem to depend on the external size.
             # the original with 7 * 7 corresponded to the 224 x 224 inputs
             #nn.Linear(512 * 7 * 7, hidden_size),
             nn.Linear(512 * 8 * 8, self.latent_size),
@@ -43,7 +43,7 @@ class VGG19ProprioTunedRegression(nn.Module):
         )
         # freeze the parameters of the feature extractor
         for param in self.feature_extractor.parameters():
-            param.requires_grad = False        
+            param.requires_grad = False
             # Move the whole thing to the GPU if available
         self.feature_extractor.to(device)
         self.model.to(device)
@@ -58,7 +58,7 @@ class VGG19ProprioTunedRegression(nn.Module):
         output = self.model(flatfeatures)
         # print(output.device)
         return output
-    
+
     def encode(self, x):
         """Performs an encoding of the input image, by forwarding though the encoding and first three layers."""
         features = self.feature_extractor(x)
@@ -69,24 +69,24 @@ class VGG19ProprioTunedRegression(nn.Module):
         return h3
 
 
-    
+
 
 class ResNetProprioTunedRegression(nn.Module):
-    """Neural network used to create a latent embedding. Starts with a ResNet neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception. 
-    
+    """Neural network used to create a latent embedding. Starts with a ResNet neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception.
+
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
     def __init__(self, exp, device):
         super(ResNetProprioTunedRegression, self).__init__()
         self.resnet = models.resnet50(pretrained=True)
-        # Create the feature extractor by removing the last fully 
+        # Create the feature extractor by removing the last fully
         # connected layer of the resnet (fc)
         self.feature_extractor = torch.nn.Sequential(*list(self.resnet.children())[:-1])
         # freeze the parameters of the feature extractor
         if exp["freeze_feature_extractor"]:
             for param in self.resnet.parameters():
-                param.requires_grad = False        
+                param.requires_grad = False
 
         self.flatten = nn.Flatten()  # Flatten the output for the fully
         # the reductor component
@@ -120,22 +120,22 @@ class ResNetProprioTunedRegression(nn.Module):
         output = self.proprioceptor(latent)
         # print(output.device)
         return output
-    
+
     def encode(self, x):
         """Performs an encoding of the input image, by forwarding though the encoding and first three layers."""
         features = self.feature_extractor(x)
         flatfeatures = self.flatten(features)
         latent = self.reductor(flatfeatures)
         return latent
-    
-# FIXME: these are identical, differ only in the regression component, 
+
+# FIXME: these are identical, differ only in the regression component,
 # maybe can be merged together somehow.
-        
+
 class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained architecture from above.
-    
+
     WOULD THIS BE TOTALLY IDENTICAL TO THE VGG19 ones?
-    
+
     """
 
     def __init__(self, exp, device="cpu"):
@@ -143,20 +143,21 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
         super().__init__(exp, device)
         # self.exp = exp
         self.enc = ResNetProprioTunedRegression(exp, device)
-        modelfile = pathlib.Path(exp["data_dir"], 
+        modelfile = pathlib.Path(exp["data_dir"],
                                 exp["proprioception_mlp_model_file"])
         assert modelfile.exists()
         self.enc.load_state_dict(torch.load(modelfile))
 
+
     def process(self, sensor_readings):
-        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
+        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor.
         Returns the z encoding in the form of a numpy array."""
         # print(f"sensor readings shape {sensor_readings.shape}")
         with torch.no_grad():
             z = self.enc.encode(sensor_readings)
         z = torch.squeeze(z)
         return z.cpu().numpy()
-    
+
 class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained VGG19 architecture from above."""
 
@@ -165,13 +166,19 @@ class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
         super().__init__(exp, device)
         self.enc = VGG19ProprioTunedRegression(exp, device)
         self.enc = self.enc.to(device)
-        modelfile = pathlib.Path(exp["data_dir"], 
+        modelfile = pathlib.Path(exp["data_dir"],
                                 exp["proprioception_mlp_model_file"])
-        assert modelfile.exists()
-        self.enc.load_state_dict(torch.load(modelfile))
+        # assert modelfile.exists()
+        # self.enc.load_state_dict(torch.load(modelfile))
+        modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
+        if modelfile.exists():
+            print(f"Loading ViT encoder weights from {modelfile}")
+            self.enc.load_state_dict(torch.load(modelfile, map_location=device))
+        else:
+            print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
 
     def process(self, sensor_readings):
-        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
+        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor.
         Returns the z encoding in the form of a numpy array."""
         # print(f"sensor readings shape {sensor_readings.shape}")
         with torch.no_grad():

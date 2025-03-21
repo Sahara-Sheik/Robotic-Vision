@@ -1,0 +1,32 @@
+name: "sp_vit_transformer"
+model_type: "VisionTransformer6D"
+
+model_type: "PretrainedViT6D"
+vit_backbone: "openai/clip-vit-large-patch14"
+loss: "MSE"
+num_outputs: 6
+learning_rate: 0.0001
+epochs: 100
+batch_size: 8
+use_6d_token: false
+resume: null
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'
+regressor_hidden_size_1: 64
+regressor_hidden_size_2: 64
+encoding_size: 128
+freeze_backbone: False #can be true if we wanna train the backbone
+encoding_size: 128
+
+
+# If you want 6D as extra token
+use_6d_token: false
+
+# Optional: if you want to resume from a specific checkpoint
+resume: null
+# # Data settings
+# train_data_path: "/path/to/train_data"
+# val_data_path: "/path/to/val_data"
+
+
+
