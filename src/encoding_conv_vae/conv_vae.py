@@ -222,9 +222,6 @@ def get_conv_vae_config(jsonfile, resume_model = None, inference_only = True):
     config = ConfigParser.from_args(args)
     sys.argv = savedargv
     # print(json.dumps(config.config, indent=4))
-    #
-    # THIS was an attempt to fix some kind of weird bug where an empty
-    # directory was created... it is not needed on 2024.11.17???
     # if it is inference only, remove the superfluously created directories.
     #
     inffix = False

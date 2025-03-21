@@ -9,8 +9,8 @@ SERVO_WRIST = 3
 SERVO_WRIST_ROTATION = 4
 SERVO_GRIP = 5
 
-# Minimums and maximums for the position values. 
-# Most of the time the system should operate in ranges that are in the 
+# Minimums and maximums for the position values.
+# Most of the time the system should operate in ranges that are in the
 # middle. Exception is the gripper, which probably often open or closed
 
 
@@ -36,7 +36,7 @@ SERVO_GRIP = 5
 
 # wrist rotation
 #POSITION_WRIST_ROTATION_DEFAULT = 75.0 # the straight value????
-#POSITION_WRIST_ROTATION_MIN = POSITION_WRIST_ROTATION_DEFAULT - 90.0 # FIXME
+#POSITION_WRIST_ROTATION_MIN = POSITION_WRIST_ROTATION_DEFAULT - 90.0
 #POSITION_WRIST_ROTATION_MAX = POSITION_WRIST_ROTATION_DEFAULT + 90.0
 
 # gripper: between 0 and 100
@@ -52,7 +52,7 @@ CST_ANGLE_MAX = 180
 CST_PULSE_MIN = 500
 CST_PULSE_MAX = 2500
 
-# fixme this might be too large a range, but it is good for debugging
+# good for debugging
 #CST_PULSE_MIN = 0
 #CST_PULSE_MAX = 3000
 
