@@ -24,7 +24,6 @@ class VisProprio_SimpleMLPRegression(nn.Module):
         self.hidden_size_1 = exp["regressor_hidden_size_1"]
         self.hidden_size_2 = exp["regressor_hidden_size_2"]
         self.output_size = exp["output_size"] # normally, 6
-        print("inputttttttttttttttttttttttttt",self.input_size )
         self.model = nn.Sequential(
             nn.Linear(self.input_size, self.hidden_size_1),
             nn.ReLU(),
