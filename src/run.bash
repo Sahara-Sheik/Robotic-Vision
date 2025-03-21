@@ -8,8 +8,8 @@ export PYTHONPATH="/BerryPicker/src/:$PYTHONPATH"
 
 
 # List of different values for the 'run' variable
-# run = "vit3"
-RUN_VALUES=("vit3" "vp_aruco_128" "vp_convvae_128" "vp_ptun_vgg19_128" "vp_ptun_resnet50_128" "vp_convvae_256" "vp_ptun_vgg19_256" "vp_ptun_resnet50_256")
+
+RUN_VALUES=("vit_large" "vit_base" "vp_aruco_128" "vp_convvae_128" "vp_ptun_vgg19_128" "vp_ptun_resnet50_128" "vp_convvae_256" "vp_ptun_vgg19_256" "vp_ptun_resnet50_256" "vp_aruco_128")
 
 # Loop through each run value and execute the notebook
 for RUN in "${RUN_VALUES[@]}"
