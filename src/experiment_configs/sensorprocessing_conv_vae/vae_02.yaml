@@ -1,8 +1,0 @@
-# Note, this overwrites the original 128
-latent_size: 256
-
-# these will be filled in later... 
-model_subdir: '0116_135527'
-model_checkpoint: 'checkpoint-epoch20.pth'
-training_task: 'proprioception-cluttered' 
-epochs: 20
