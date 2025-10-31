@@ -15,14 +15,14 @@ Open `process_112_cameras.py` and change these lines (staring line 362):
 ```python
 # Change these to match your actual paths:
 ## Sahara's files"
-BASE_FOLDER = "C:\\Users\\rkhan\\Downloads\\112cam"
-CAMERA_PLACEMENTS_FILE = "C:\\Users\\rkhan\\Downloads\\camera_placements.txt"
-OUTPUT_DIR = "C:\\Users\\rkhan\\Downloads\\hemisphere_output"
+BASE_FOLDER = "C:\...\112cam"
+CAMERA_PLACEMENTS_FILE = "C:\\...\camera_placements.txt"
+OUTPUT_DIR = "C:\....\\hemisphere_output"
 ```
 
 ### Step 2: Run the Script
 ```bash
-cd C:\Users\rkhan\Downloads
+cd C:\location of your files\
 python process_112_cameras.py
 ```
 
@@ -36,6 +36,15 @@ One for each component:
 - **wrist_angle** - Wrist angle precision
 - **wrist_rotation** - Rotation measurement
 - **gripper** - Gripper position accuracy
+
+### 6 Hemisphere Visualizations for gradient
+One for each component:
+- **height** -
+- **distance** 
+- **heading** 
+- **wrist_angle** 
+- **wrist_rotation** 
+- **gripper** 
 
 ### Output Files
 ```
@@ -73,8 +82,6 @@ hemisphere_output/
 - Ring at 80°: 12 cameras
 - Top at 90°: 4 cameras
 
-
-
 ### How to run:
 ```python
 # This reads our  112cam folder
@@ -87,8 +94,8 @@ from process_112_cameras import Camera112Processor
 
 # Create processor
 processor = Camera112Processor(
-    base_folder="C:\\Users\\rkhan\\Downloads\\112cam",
-    camera_placements_file="C:\\Users\\rkhan\\Downloads\\camera_placements.txt"
+    base_folder="C:\\....\\112cam",
+    camera_placements_file="C:\\...\camera_placements.txt"
 )
 
 # Process data
@@ -104,7 +111,7 @@ processor.generate_summary_report("output")
 ## 🛠️ Troubleshooting
 
 ### If MSE files are missing:
-The script will use default values and warn us. folder structure needs to be or else we need to adust the script:
+The script will use default values and warn us. folder structure needs to be as below or else we need to adjust the script:
 ```
 112cam/
 └── VisualProprioception_flow_00dev000/
@@ -123,7 +130,7 @@ pip install numpy matplotlib scipy pandas
 ### If paths don't work:
 Use raw strings in Python:
 ```python
-BASE_FOLDER = r"C:\Users\rkhan\Downloads\112cam"
+BASE_FOLDER = r"C:\...\112cam"
 ```
 
 ## 📈 Interpreting Results
@@ -146,6 +153,7 @@ We can use this to:
 - [ ] camera_placements.txt has 112 camera positions
 - [ ] Python packages installed (numpy, matplotlib, scipy, pandas)
 - [ ] Paths updated in process_112_cameras.py
+
 
 
 
