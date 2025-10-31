@@ -4,12 +4,12 @@
 
 ### Files Created for You:
 1. **process_112_cameras.py** - Main processing script
-3. **hemisphere_heatmap.py** - Core visualization library (updated)
-4. **real_data_visualizer.py** - Data loading utilities (updated)
+3. **hemisphere_heatmap.py** - Core visualization library 
+4. **real_data_visualizer.py** - Data loading utilities 
 
 ## 🚀 Quick Start Instructions
 
-### Step 1: Update Your File Paths to where you have stores the mse results and camera postions
+### Step 1: Update Your File Paths to where you have stored the mse results and camera postions
 Open `process_112_cameras.py` and change these lines (staring line 362):
 
 ```python
@@ -146,5 +146,6 @@ We can use this to:
 - [ ] camera_placements.txt has 112 camera positions
 - [ ] Python packages installed (numpy, matplotlib, scipy, pandas)
 - [ ] Paths updated in process_112_cameras.py
+
 
 
