@@ -1,6 +1,6 @@
 # 112 Camera Hemisphere Visualization Setup Guide
 
-## 🎯 Complete Solution for Our 112 Camera System with our data
+## 🎯 112 Camera System with our data
 
 ### Files Created for You:
 1. **process_112_cameras.py** - Main processing script
@@ -10,7 +10,7 @@
 ## 🚀 Quick Start Instructions
 
 ### Step 1: Update Your File Paths to where you have stored the mse results and camera postions
-Open `process_112_cameras.py` and change these lines (staring line 362):
+Open `process_112_cameras.py` and change these:
 
 ```python
 # Change these to match your actual paths:
@@ -63,6 +63,7 @@ hemisphere_output/
 ├── gripper_hemisphere.png
 ├── all_components_hemispheres.png  (6-panel combined view)  ### I NEED to fix this
 └── component_summary.csv (statistical report)
+I have added more here so I need to update this
 ```
 
 ## 🔍 Understanding Results
@@ -121,17 +122,6 @@ The script will use default values and warn us. folder structure needs to be as 
                 └── msecomparison_values.csv
 ```
 
-### If you get import errors:
-Install required packages:
-```bash
-pip install numpy matplotlib scipy pandas
-```
-
-### If paths don't work:
-Use raw strings in Python:
-```python
-BASE_FOLDER = r"C:\...\112cam"
-```
 
 ## 📈 Interpreting Results
 
@@ -153,6 +143,7 @@ We can use this to:
 - [ ] camera_placements.txt has 112 camera positions
 - [ ] Python packages installed (numpy, matplotlib, scipy, pandas)
 - [ ] Paths updated in process_112_cameras.py
+
 
 
 
