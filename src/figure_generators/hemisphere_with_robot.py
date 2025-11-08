@@ -146,10 +146,11 @@ def plot_hemisphere_with_robot_topdown(vis, output_path, robot_image_path=None,
             # Convert to RGBA for transparency
             if robot_img.mode != 'RGBA':
                 robot_img = robot_img.convert('RGBA')
+            y_offset = 0.2 * vis.radius  # Adjust this value (0.2 = 20% of radius)
 
             # Calculate image extent (incase we want to change robot images robot_size is fraction of hemisphere radius )
             extent = [-robot_size*vis.radius, robot_size*vis.radius,
-                     -robot_size*vis.radius, robot_size*vis.radius]
+                     -robot_size*vis.radius+y_offset, robot_size*vis.radius+y_offset]
 
             # Display robot image at center with transparency
             ax.imshow(robot_img, extent=extent, zorder=10, alpha=0.6)
@@ -185,7 +186,7 @@ def plot_hemisphere_with_robot_topdown(vis, output_path, robot_image_path=None,
     ax.tick_params(labelsize=9)
 
     # Add colorbar
-    cbar = plt.colorbar(contourf, ax=ax, shrink=0.8)
+    cbar = plt.colorbar(contourf, ax=ax, shrink=0.8,orientation='horizontal')
     cbar.set_label('Accuracy', fontsize=10)
     cbar.ax.tick_params(labelsize=8)
 
@@ -276,7 +277,7 @@ def plot_hemisphere_with_robot_3d(vis, output_path, robot_image_path=None,
     norm = Normalize(vmin=acc_smooth.min(), vmax=acc_smooth.max())
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax, shrink=0.5, aspect=10)
+    cbar = plt.colorbar(sm, ax=ax, shrink=0.5, aspect=10, orientation='horizontal')
     cbar.set_label('Accuracy', fontsize=10)
     cbar.ax.tick_params(labelsize=8)
 
@@ -288,7 +289,7 @@ def plot_hemisphere_with_robot_3d(vis, output_path, robot_image_path=None,
     print(f"Saved 3D hemisphere with robot to {output_path}")
 
 
-def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path,
+def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,robot_image_path_top,
                                         cmap='hot', show_cameras=False):
     """
     Create a combined view with both 3D and top-down perspectives.
@@ -333,8 +334,8 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path,
                    depthshade=False, zorder=10)
 
     # Add robot at center
-    if robot_image_path:
-        add_robot_to_hemisphere_3d(ax1, robot_image_path,
+    if robot_image_path_3d:
+        add_robot_to_hemisphere_3d(ax1, robot_image_path_3d,
                                    position=(-0.3, 0.9, 0.1*vis.radius),
                                    size=0.08)
     else:
@@ -367,9 +368,9 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path,
 
     # Add robot image
     robot_size = 0.40
-    if robot_image_path:
+    if robot_image_path_top:
         try:
-            robot_img = Image.open(robot_image_path)
+            robot_img = Image.open(robot_image_path_top)
 
             # Rotate 90 degrees counter-clockwise
             robot_img = robot_img.rotate(90, expand=True)
@@ -426,7 +427,7 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path,
     sm.set_array([])
 
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-    cbar = fig.colorbar(sm, cax=cbar_ax)
+    cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
     cbar.set_label('Accuracy', fontsize=10)
     cbar.ax.tick_params(labelsize=8)
 
@@ -497,8 +498,17 @@ def plot_hemisphere_transparent_robot(vis, output_path, robot_image_path,
 
             robot_img_transparent = Image.fromarray(img_array)
 
-            extent = [-robot_size*vis.radius, robot_size*vis.radius,
-                     -robot_size*vis.radius, robot_size*vis.radius]
+            # *** SHIFT ROBOT UP IN Y DIRECTION ***
+            y_offset = 0.2 * vis.radius  # Adjust this value
+
+            # Calculate image extent with y-offset
+            # extent = [left, right, bottom, top]
+            extent = [
+                -robot_size*vis.radius,              # left (x)
+                robot_size*vis.radius,               # right (x)
+                -robot_size*vis.radius + y_offset,   # bottom (y) - shifted up
+                robot_size*vis.radius + y_offset     # top (y) - shifted up
+            ]
 
             # Display transparent robot
             ax.imshow(robot_img_transparent, extent=extent, zorder=15)
@@ -537,7 +547,7 @@ def plot_hemisphere_transparent_robot(vis, output_path, robot_image_path,
     ax.tick_params(labelsize=10)
 
     # Add colorbar
-    cbar = plt.colorbar(contourf, ax=ax, shrink=0.8, pad=0.05)
+    cbar = plt.colorbar(contourf, ax=ax, shrink=0.8, pad=0.05, orientation='horizontal')
     cbar.set_label('Accuracy', fontsize=11)
     cbar.ax.tick_params(labelsize=9)
 
