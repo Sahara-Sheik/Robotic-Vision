@@ -116,8 +116,15 @@ class Camera112Processor:
             device_folder = f"VisualProprioception_flow_00dev{i:03d}"
 
             # Build path to MSE file
-            mse_path = self.base_folder / device_folder / "result" / "visual_proprioception" / "vp_comp_flow_all" / "msecomparison_values.csv"
-
+            # mse_path = self.base_folder / device_folder / "result" / "visual_proprioception" / "vp_comp_flow_all" / "msecomparison_values.csv"
+            mse_path = (
+                self.base_folder
+                / device_folder
+                / "result"
+                / "visual_proprioception"
+                / "vp_comp_flow_all"
+                / "msecomparison_values.csv"
+            )
             if mse_path.exists():
                 found_count += 1
                 try:
@@ -208,15 +215,15 @@ class Camera112Processor:
 
                 # Convert MSE to accuracy (lower MSE = higher accuracy)
                 # Map MSE range [0, 0.5] to accuracy [1, 0]
-                accuracy = 1.0 - (mse_value * 2.0)  # Scale factor of 2
-                accuracy = np.clip(accuracy, 0, 1)
+                # accuracy = 1.0 - (mse_value * 2.0)  # Scale factor of 2
+                # accuracy = np.clip(accuracy, 0, 1)
 
                 data.append({
                     'camera': camera_name,
                     'x': coords['x'],
                     'y': coords['y'],
                     'z': coords['z'],
-                    'accuracy': accuracy,
+                    # 'accuracy': accuracy,
                     'mse': mse_value,
                     'original_x': coords['original_x'],
                     'original_y': coords['original_y'],
@@ -243,6 +250,25 @@ class Camera112Processor:
             print(f"  Processing {component}...")
             df = self.generate_component_csv(component, output_dir)
             dataframes[component] = df
+            all_mse = []
+        for df in dataframes.values():
+            all_mse.extend(df['mse'].values)
+
+        global_mse_min = np.min(all_mse)
+        global_mse_max = np.max(all_mse)
+
+        print(f"\n Global MSE: min={global_mse_min:.4f}, max={global_mse_max:.4f}")
+
+        # Add accuracy to each dataframe using GLOBAL scale
+        for component, df in dataframes.items():
+            mse = df['mse'].values
+            # Normalize: worst MSE → 0, best MSE → 1
+            accuracy = 1 - (mse - global_mse_min) / (global_mse_max - global_mse_min)
+            df['accuracy'] = accuracy
+
+            # Save updated CSV
+            csv_file = os.path.join(output_dir, f"{component}_hemisphere_data.csv")
+            df.to_csv(csv_file, index=False)
 
         return dataframes
 
@@ -251,10 +277,11 @@ class Camera112Processor:
         print("\nCreating hemisphere visualizations with robot...")
 
         # UPDATE THIS PATH TO YOUR ROBOT IMAGE
-        ROBOT_IMAGE_PATH = "C:\\Users\\rkhan\\Downloads\\robot.png"
+        ROBOT_IMAGE_PATH_3D = "C:\\Users\\rkhan\\Downloads\\robot.png"
+        ROBOT_IMAGE_PATH_TOP = "C:\\Users\\rkhan\\Downloads\\robot_top.png"
 
         # Create figure for combined plot
-        fig_all = plt.figure(figsize=(18, 12))
+        fig_all = plt.figure(figsize=(9, 6))
 
         cvpr_components = []
 
@@ -273,12 +300,19 @@ class Camera112Processor:
             vis.camera_positions = df[['x', 'y', 'z']].values
 
             # Normalize accuracy (1 - normalized MSE)
+            # mse = df['mse'].values
+            # mse_min, mse_max = mse.min(), mse.max()
+            # if mse_max > mse_min:
+            #     acc = 1 - (mse - mse_min) / (mse_max - mse_min)
+            # else:
+            #     acc = np.ones_like(mse)
             mse = df['mse'].values
             mse_min, mse_max = mse.min(), mse.max()
             if mse_max > mse_min:
                 acc = 1 - (mse - mse_min) / (mse_max - mse_min)
             else:
                 acc = np.ones_like(mse)
+
 
             vis.accuracy_values = acc
 
@@ -301,7 +335,7 @@ class Camera112Processor:
             # Paper-sized panels
             paper_base = os.path.join(output_dir, component)
             vis.plot_paper_topdown(paper_base + "_topdown_cvpr.png", cmap='hot', label=component)
-            vis.plot_paper_3d(paper_base + "_3d_cvpr.png", cmap='hot', label=component,robot_image_path=ROBOT_IMAGE_PATH)
+            vis.plot_paper_3d(paper_base + "_3d_cvpr.png", cmap='hot', label=component,robot_image_path=ROBOT_IMAGE_PATH_3D)
             vis.plot_paper_gradient3d(paper_base + "_grad3d_cvpr.png", label=component)
 
             # ============================================================
@@ -313,9 +347,9 @@ class Camera112Processor:
             plot_hemisphere_with_robot_topdown(
                 vis,
                 robot_topdown_path,
-                robot_image_path=ROBOT_IMAGE_PATH,
+                # robot_image_path=ROBOT_IMAGE_PATH_TOP,
                 cmap='hot',
-                robot_size=0.40  # Proportional: 19" robot in 1.2m dome
+                robot_size=0.21  # Proportional: top is about 8.5" robot in 1.2m dome
             )
             print(f"    ✓ Created top-down with robot")
 
@@ -324,10 +358,10 @@ class Camera112Processor:
             plot_hemisphere_transparent_robot(
                 vis,
                 robot_transparent_path,
-                robot_image_path=ROBOT_IMAGE_PATH,
+                robot_image_path=ROBOT_IMAGE_PATH_TOP,
                 cmap='hot',
                 robot_alpha=0.5,      # Adjust: 0.3=subtle, 0.5=balanced, 0.7=visible
-                robot_size=0.40,  # Proportional
+                robot_size=0.21,  # Proportional
                 show_cameras=False    # Set True to show  our camera dots
             )
             print(f"    ✓ Created transparent robot view")
@@ -337,10 +371,10 @@ class Camera112Processor:
             plot_hemisphere_transparent_robot(
                 vis,
                 robot_subtle_path,
-                robot_image_path=ROBOT_IMAGE_PATH,
+                robot_image_path=ROBOT_IMAGE_PATH_TOP,
                 cmap='hot',
                 robot_alpha=0.35,     # Very transparent
-                robot_size=0.35,  # Subtle version
+                robot_size=0.21,  # Subtle version
                 show_cameras=False
             )
             print(f"    ✓ Created subtle robot view")
@@ -350,7 +384,8 @@ class Camera112Processor:
             plot_hemisphere_with_robot_combined(
                 vis,
                 robot_combined_path,
-                robot_image_path=ROBOT_IMAGE_PATH,
+                robot_image_path_3d=ROBOT_IMAGE_PATH_3D,
+                robot_image_path_top=ROBOT_IMAGE_PATH_TOP,
                 cmap='hot',
                 show_cameras=False  # Robot size set to 0.40 in function
             )
@@ -361,10 +396,10 @@ class Camera112Processor:
             plot_hemisphere_transparent_robot(
                 vis,
                 robot_with_cams_path,
-                robot_image_path=ROBOT_IMAGE_PATH,
+                robot_image_path=ROBOT_IMAGE_PATH_TOP,
                 cmap='hot',
                 robot_alpha=0.5,
-                robot_size=0.40,  # Proportional
+                robot_size=0.21,  # Proportional 10 inches in 1.2 m
                 show_cameras=False     # Show camera dots
             )
             print(f"    ✓ Created robot view with camera positions")
@@ -379,28 +414,28 @@ class Camera112Processor:
             # CVPR: Top-down
             cvpr_topdown = os.path.join(output_dir, f"{component}_robot_topdown_cvpr.png")
             plot_hemisphere_with_robot_topdown(
-                vis, cvpr_topdown, ROBOT_IMAGE_PATH,
-                cmap='hot', robot_size=0.40
+                vis, cvpr_topdown, ROBOT_IMAGE_PATH_TOP,
+                cmap='hot', robot_size=0.21
             )
 
             # CVPR: Transparent
             cvpr_transparent = os.path.join(output_dir, f"{component}_robot_transparent_cvpr.png")
             plot_hemisphere_transparent_robot(
-                vis, cvpr_transparent, ROBOT_IMAGE_PATH,
-                cmap='hot', robot_alpha=0.5, robot_size=0.40, show_cameras=False
+                vis, cvpr_transparent, ROBOT_IMAGE_PATH_TOP,
+                cmap='hot', robot_alpha=0.5, robot_size=0.21, show_cameras=False
             )
 
             # CVPR: Subtle
             cvpr_subtle = os.path.join(output_dir, f"{component}_robot_subtle_cvpr.png")
             plot_hemisphere_transparent_robot(
-                vis, cvpr_subtle, ROBOT_IMAGE_PATH,
-                cmap='hot', robot_alpha=0.35, robot_size=0.35, show_cameras=False
+                vis, cvpr_subtle, ROBOT_IMAGE_PATH_TOP,
+                cmap='hot', robot_alpha=0.21, robot_size=0.21, show_cameras=False
             )
 
             # CVPR: Combined
             cvpr_combined = os.path.join(output_dir, f"{component}_robot_combined_cvpr.png")
             plot_hemisphere_with_robot_combined(
-                vis, cvpr_combined, ROBOT_IMAGE_PATH,
+                vis, cvpr_combined, ROBOT_IMAGE_PATH_3D,ROBOT_IMAGE_PATH_TOP,
                 cmap='hot', show_cameras=False
             )
 
@@ -475,7 +510,7 @@ class Camera112Processor:
             """
             from hemisphere_with_robot import plot_hemisphere_transparent_robot
 
-            fig = plt.figure(figsize=(14, 18), dpi=300)
+            fig = plt.figure(figsize=(7, 9), dpi=300)
 
             for idx, comp in enumerate(components_data):
                 # Create a temporary visualizer for this component
@@ -497,9 +532,9 @@ class Camera112Processor:
                 contourf = ax.contourf(X, Y, acc_smooth, levels=40, cmap='hot')
 
                 # Add robot image with transparency
-                robot_size = 0.40  # 40% - proportional to 19" robot
+                robot_size = 0.264 # 40% - proportional to 19" robot
                 try:
-                    robot_img = Image.open(robot_image_path)
+                    robot_img = Image.open(ROBOT_IMAGE_PATH_TOP)
 
                     # Rotate 90 degrees counter-clockwise for top down
                     robot_img = robot_img.rotate(90, expand=True)
@@ -511,9 +546,15 @@ class Camera112Processor:
                     if img_array.shape[2] == 4:
                         img_array[:, :, 3] = (img_array[:, :, 3] * 0.45).astype(np.uint8)
 
-                    robot_img_transparent = Image.fromarray(img_array)
+                    y_offset = 0.2 * vis.radius  # Adjust this value (0.2 = 20% of radius)
+
+                    # Calculate image extent (incase we want to change robot images robot_size is fraction of hemisphere radius )
                     extent = [-robot_size*vis.radius, robot_size*vis.radius,
-                             -robot_size*vis.radius, robot_size*vis.radius]
+                            -robot_size*vis.radius+y_offset, robot_size*vis.radius+y_offset]
+
+                    robot_img_transparent = Image.fromarray(img_array)
+                    # extent = [-robot_size*vis.radius, robot_size*vis.radius,
+                    #          -robot_size*vis.radius, robot_size*vis.radius]
                     ax.imshow(robot_img_transparent, extent=extent, zorder=15)
 
                     # Border
@@ -560,7 +601,7 @@ class Camera112Processor:
             print(f"  ✓ Saved robot comparison grid to {output_path}")
 
         print("\n  Creating master grid with all robot visualizations...")
-        create_robot_comparison_grid(cvpr_components, output_dir, ROBOT_IMAGE_PATH)
+        create_robot_comparison_grid(cvpr_components, output_dir, ROBOT_IMAGE_PATH_3D)
 
         print("\n" + "="*70)
         print("VISUALIZATION SUMMARY")
@@ -636,10 +677,12 @@ def main():
     #####                       Sahara's path                                #####
     ##############################################################################
     #  Update these paths to match your system
-    BASE_FOLDER = "C:\\Users\\rkhan\\Downloads\\112cam"  # Update this path
+    BASE_FOLDER = "C:\\Users\\rkhan\\Downloads\\112results"
     CAMERA_PLACEMENTS_FILE = "C:\\Users\\rkhan\\Downloads\\camera_placements.txt"  # Update this path
     OUTPUT_DIR = "C:\\Users\\rkhan\\Downloads\\hemisphere_output3a"  # Output directory
-    ROBOT_IMAGE_PATH = "C:\\Users\\rkhan\\Downloads\\robot.png"
+    ROBOT_IMAGE_PATH_3D = "C:\\Users\\rkhan\\Downloads\\robot.png"
+    ROBOT_IMAGE_PATH_TOP = "C:\\Users\\rkhan\\Downloads\\robot_top.png"
+
 
     print("\n" + "="*70)
     print("112 CAMERA HEMISPHERE VISUALIZATION PROCESSOR")
@@ -661,7 +704,7 @@ def main():
     dataframes = processor.generate_all_csvs(OUTPUT_DIR)
     processor.create_visualizations(OUTPUT_DIR)
 
-    # processor.create_visualizations(OUTPUT_DIR, robot_image_path=ROBOT_IMAGE_PATH)
+    # processor.create_visualizations(OUTPUT_DIR, robot_image_path=ROBOT_IMAGE_PATH_3D)
 
     # processor.create_visualizations(OUTPUT_DIR)
     processor.generate_summary_report(OUTPUT_DIR)
