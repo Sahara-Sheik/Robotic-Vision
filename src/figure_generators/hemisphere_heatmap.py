@@ -176,7 +176,7 @@ class HemisphereHeatmap:
         accuracy_mesh = self.interpolate_accuracy(X, Y, Z)
 
         # Create figure with subplots
-        fig = plt.figure(figsize=(20, 8))
+        fig = plt.figure(figsize=(20/2, 8/2))
         # fig.patch.set_facecolor("#101014")
 
 
@@ -454,7 +454,7 @@ class HemisphereHeatmap:
             dx = dx_raw / (max_mag + 1e-12)
             dy = dy_raw / (max_mag + 1e-12)
 
-        fig, ax = plt.subplots(figsize=(fig_width_in, fig_width_in), dpi=dpi)
+        fig, ax = plt.subplots(figsize=(fig_width_in/2, fig_width_in/2), dpi=dpi)
 
 
         cf = ax.contourf(X, Y, acc_mesh, levels=30, cmap=cmap)
@@ -511,7 +511,7 @@ class HemisphereHeatmap:
         ax.set_ylabel("Y (m)", fontsize=7)
         ax.tick_params(labelsize=6)
 
-        cbar = fig.colorbar(cf, ax=ax, fraction=0.046, pad=0.03)
+        cbar = fig.colorbar(cf, ax=ax, fraction=0.046, pad=0.03, orientation='horizontal')
         cbar.ax.tick_params(labelsize=6)
         cbar.set_label("Accuracy", fontsize=7)
 
@@ -533,24 +533,37 @@ class HemisphereHeatmap:
         cmap="hot",
         label=None,
         robot_image_path=None,
-        size=0.03,
+        size=0.01,
 
     ):
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D  # noqa
         import numpy as np
 
-        X, Y, Z, THETA, PHI = self.create_hemisphere_mesh(resolution=50)
+        from scipy.ndimage import gaussian_filter  # add this import near the top of the function
+
+        X, Y, Z, THETA, PHI = self.create_hemisphere_mesh(resolution=80)  # a bit higher res
         acc_mesh = self.interpolate_accuracy(X, Y, Z)
 
-        fig = plt.figure(figsize=(fig_width_in, fig_width_in * 0.85), dpi=dpi)
+        # Smooth the accuracy map for a softer look
+        acc_smooth = gaussian_filter(acc_mesh, sigma=1.0)
+
+        # X, Y, Z, THETA, PHI = self.create_hemisphere_mesh(resolution=60)
+        # acc_mesh = self.interpolate_accuracy(X, Y, Z)
+
+        fig = plt.figure(figsize=(fig_width_in/2, fig_width_in * 0.85/2), dpi=dpi)
         ax = fig.add_subplot(111, projection="3d")
+
         light = (Y - Y.min()) / (Y.max() - Y.min() + 1e-6)
-        colors = plt.cm.hot(acc_mesh)  # (n,m,4)
-        colors[..., :3] = colors[..., :3] * (0.6 + 0.4*light[..., None])  # brighten
+        colors = plt.cm.hot(acc_smooth)  # use smoothed values
+        colors[..., :3] = colors[..., :3] * (0.6 + 0.4*light[..., None])
+        # light = (Y - Y.min()) / (Y.max() - Y.min() + 1e-6)
+        # colors = plt.cm.hot(acc_mesh)  # (n,m,4)
+        # colors[..., :3] = colors[..., :3] * (0.6 + 0.4*light[..., None])  # brighten
         ax.grid(False)
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
             axis._axinfo["grid"]["linewidth"] = 0
+
 
 
         ax.plot_surface(
@@ -558,7 +571,7 @@ class HemisphereHeatmap:
             facecolors=colors,
             # facecolors=plt.cm.get_cmap(cmap)(acc_mesh),
             rstride=1, cstride=1,
-            linewidth=0, antialiased=False,
+            linewidth=0, antialiased=True,
             shade=False, alpha=0.6,
         )
 
@@ -587,15 +600,19 @@ class HemisphereHeatmap:
         ax.zaxis.set_label_coords(-0.08, 0.5)   # (x, y) in axes coords
 
         mappable = plt.cm.ScalarMappable(cmap=cmap)
-        mappable.set_array(acc_mesh)
+        mappable.set_array(acc_smooth)
+
+        # mappable = plt.cm.ScalarMappable(cmap=cmap)
+        # mappable.set_array(acc_mesh)
         cbar = fig.colorbar(
             mappable,
             ax=ax,
             fraction=0.046,
-            pad=0.06,          # was 0.03 → push to the right
+            pad=0.12,          # was 0.03 → push to the right
+            orientation='horizontal',
         )
         cbar.ax.tick_params(labelsize=6)
-        cbar.set_label("Accuracy", fontsize=7)
+        cbar.set_label("Accuracy", fontsize=5)
 
         # Bottom label removed to keep images clean
         # if label is not None:
@@ -608,18 +625,110 @@ class HemisphereHeatmap:
                     ax,
                     robot_image_path,
                     position=(-0.3, 0, 0.1*self.radius),   # scale with radius
-                    size=0.030                           # proper proportional size
+                    size=0.01                           # proper proportional size
                 )
             except Exception as e:
                 print(f"Could not add robot image in plot_paper_3d: {e}")
 
 
-        fig.tight_layout(pad=0.4)
+        fig.tight_layout(pad=0.2)
         fig.savefig(save_path, dpi=dpi)
         if save_path.lower().endswith(".png"):
             fig.savefig(save_path.replace(".png", ".pdf"))
         plt.close(fig)
 
+    def plot_paper_3d(
+        self,
+        save_path,
+        fig_width_in=3.25,
+        dpi=300,
+        cmap="hot",
+        label=None,
+        robot_image_path=None,
+        size=0.01,
+    ):
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D  # noqa
+        import numpy as np
+
+        # mesh + accuracy
+        X, Y, Z, THETA, PHI = self.create_hemisphere_mesh(resolution=60)
+        acc_mesh = self.interpolate_accuracy(X, Y, Z)
+
+        # smaller, more square canvas – mostly sphere
+        fig = plt.figure(figsize=(fig_width_in * 0.55, fig_width_in * 0.55), dpi=dpi)
+        ax = fig.add_subplot(111, projection="3d")
+
+        # coloring
+        light = (Y - Y.min()) / (Y.max() - Y.min() + 1e-6)
+        colors = plt.cm.hot(acc_mesh)
+        colors[..., :3] = colors[..., :3] * (0.6 + 0.4 * light[..., None])
+
+        ax.grid(False)
+        for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+            axis._axinfo["grid"]["linewidth"] = 0
+
+        # hemisphere surface
+        ax.plot_surface(
+            X, Y, Z,
+            facecolors=colors,
+            rstride=1, cstride=1,
+            linewidth=0,
+            antialiased=True,
+            shade=False,
+            alpha=0.7,
+        )
+
+        # make the sphere fill the axes
+        ax.set_xlim(-self.radius * 1.05, self.radius * 1.05)
+        ax.set_ylim(-self.radius * 1.05, self.radius * 1.05)
+        ax.set_zlim(0, self.radius * 1.05)
+        ax.set_box_aspect([1, 1, 0.6])
+        ax.view_init(elev=28, azim=40)
+
+        # very small axis labels & ticks
+        ax.set_xlabel("X (m)", fontsize=5, labelpad=0)
+        ax.set_ylabel("Y (m)", fontsize=5, labelpad=0)
+        ax.set_zlabel("Z (m)", fontsize=5, labelpad=2)
+        ax.tick_params(labelsize=4, pad=1)
+
+        # move Z label left so it doesn’t clash with colorbar
+        ax.zaxis.set_rotate_label(False)
+        ax.zaxis.set_label_coords(-0.08, 0.5)
+
+        # tiny horizontal colorbar
+        mappable = plt.cm.ScalarMappable(cmap=cmap)
+        mappable.set_array(acc_mesh)
+        cbar = fig.colorbar(
+            mappable,
+            ax=ax,
+            fraction=0.035,   # slimmer bar
+            pad=0.02,         # closer to axes
+            orientation="horizontal",
+        )
+        cbar.ax.tick_params(labelsize=4, pad=0)
+        cbar.set_label("Accuracy", fontsize=5)
+
+        # optional robot, but small
+        if robot_image_path:
+            from hemisphere_with_robot import add_robot_to_hemisphere_3d
+            try:
+                add_robot_to_hemisphere_3d(
+                    ax,
+                    robot_image_path,
+                    position=(-0.3, 0, 0.1 * self.radius),
+                    size=size,   # already tiny (~1%)
+                )
+            except Exception as e:
+                print(f"Could not add robot image in plot_paper_3d: {e}")
+
+        # aggressively remove outer margins
+        fig.subplots_adjust(left=0.0, right=1.0, bottom=0.05, top=0.95)
+        fig.savefig(save_path, dpi=dpi, bbox_inches="tight", pad_inches=0.01)
+        if save_path.lower().endswith(".png"):
+            fig.savefig(save_path.replace(".png", ".pdf"), dpi=dpi,
+                        bbox_inches="tight", pad_inches=0.01)
+        plt.close(fig)
 
     def plot_paper_gradient3d(
         self,
@@ -651,7 +760,7 @@ class HemisphereHeatmap:
         grad_mag = np.sqrt(dx**2 + dy**2)
 
         # 2) figure
-        fig = plt.figure(figsize=(fig_width_in, fig_width_in * 0.85), dpi=dpi)
+        fig = plt.figure(figsize=(fig_width_in/2, fig_width_in * 0.85/2), dpi=dpi)
         ax = fig.add_subplot(111, projection="3d")
         ax.grid(False)
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
@@ -720,6 +829,7 @@ class HemisphereHeatmap:
             ax=ax,
             fraction=0.046,
             pad=0.06,   # push out a bit
+            orientation='horizontal'
         )
         cbar.ax.tick_params(labelsize=6)
         cbar.set_label("Gradient Magnitude", fontsize=7)
@@ -765,7 +875,7 @@ class HemisphereHeatmap:
         # 2-column CVPR width
         fig_w = 6.75
         fig_h = 7.0
-        fig = plt.figure(figsize=(fig_w, fig_h), dpi=300)
+        fig = plt.figure(figsize=(fig_w/2, fig_h/2), dpi=300)
 
         # only 6
         components_data = components_data[:6]
@@ -785,8 +895,10 @@ class HemisphereHeatmap:
             vis.camera_positions = comp["positions"]
             vis.accuracy_values = comp["accuracy"]
 
-            X, Y, Z, THETA, PHI = vis.create_hemisphere_mesh(resolution=45)
+            X, Y, Z, THETA, PHI = vis.create_hemisphere_mesh(resolution=60)
             acc_mesh = vis.interpolate_accuracy(X, Y, Z)
+            from scipy.ndimage import gaussian_filter
+            acc_smooth = gaussian_filter(acc_mesh, sigma=1.5)
             all_vals.append(acc_mesh)
 
             # Scale to 1.2m physical size for display
@@ -794,19 +906,39 @@ class HemisphereHeatmap:
             Y = Y * 1.2
             Z = Z * 1.2
 
-            light = (Y - Y.min()) / (Y.max() - Y.min() + 1e-6)
-            colors = plt.cm.hot(acc_mesh)  # (n,m,4)
-            colors[..., :3] = colors[..., :3] * (0.6 + 0.4*light[..., None])  # brighten
 
+            # BETTER LIGHTING
+            y_light = (Y - Y.min()) / (Y.max() - Y.min() + 1e-6)
+            z_light = (Z / (Z.max() + 1e-6))
+            light = 0.5 * y_light + 0.5 * z_light
+
+            colors = plt.cm.hot(acc_smooth)
+            colors[..., :3] = colors[..., :3] * (0.5 + 0.5*light[..., None])
+
+            # BEAUTIFUL SURFACE
             ax.plot_surface(
                 X, Y, Z,
-                # facecolors=plt.cm.get_cmap(cmap)(acc_mesh),
-                facecolors = colors,
+                facecolors=colors,
                 rstride=1, cstride=1,
-                linewidth=0, antialiased=False,
+                linewidth=0,
+                antialiased=True,   # ← TRUE!
                 shade=False,
-                alpha=0.65,
+                alpha=0.8,          # ← 0.8!
             )
+
+            # light = (Y - Y.min()) / (Y.max() - Y.min() + 1e-6)
+            # colors = plt.cm.hot(acc_mesh)  # (n,m,4)
+            # colors[..., :3] = colors[..., :3] * (0.6 + 0.4*light[..., None])  # brighten
+
+            # ax.plot_surface(
+            #     X, Y, Z,
+            #     # facecolors=plt.cm.get_cmap(cmap)(acc_mesh),
+            #     facecolors = colors,
+            #     rstride=1, cstride=1,
+            #     linewidth=0, antialiased=False,
+            #     shade=False,
+            #     alpha=0.65,
+            # )
 
             # ADD ROBOT IMAGE AT CENTER
             # try:
@@ -828,12 +960,12 @@ class HemisphereHeatmap:
             #     robot_img_transparent = Image.fromarray(img_array)
 
             try:
-                ROBOT_IMAGE_PATH = "C:\\Users\\rkhan\\Downloads\\robot.png"
+                ROBOT_IMAGE_PATH_3D = "C:\\Users\\rkhan\\Downloads\\robot.png"
                 add_robot_to_hemisphere_3d(
                     ax,
-                    ROBOT_IMAGE_PATH,
-                    position=(-0.1, 0.0, 0.15*1.2),   # scale with 1.2m radius
-                    size=0.030                         # proper proportional size (40%)
+                    ROBOT_IMAGE_PATH_3D,
+                    position=(-0.3, 0.7, 0.2*1.2),   # scale with 1.2m radius
+                    size=0.010                         # proper proportional size (40%)
                 )
             except Exception as e:
                 print(f"Could not add robot to panel {comp['name']}: {e}")
@@ -877,14 +1009,14 @@ class HemisphereHeatmap:
             #     zorder=5,
             # )
 
-            ax.set_xlabel("X (m)", fontsize=6)
-            ax.set_ylabel("Y (m)", fontsize=6)
-            ax.set_zlabel("Z (m)", fontsize=6)
-            ax.tick_params(labelsize=5)
+            # ax.set_xlabel("X (m)", fontsize=6)
+            # ax.set_ylabel("Y (m)", fontsize=6)
+            # ax.set_zlabel("Z (m)", fontsize=6)
+            # ax.tick_params(labelsize=5)
             ax.set_box_aspect([1, 1, 0.5])
-            ax.set_xlim([-1.3, 1.3])
-            ax.set_ylim([-1.3, 1.3])
-            ax.set_zlim([0, 1.3])
+            # ax.set_xlim([-1.3, 1.3])
+            # ax.set_ylim([-1.3, 1.3])
+            # ax.set_zlim([0, 1.3])
             # alternate views a bit so they don’t self-hide
             if idx % 2 == 0:
                 ax.view_init(elev=26, azim=38)
@@ -938,7 +1070,7 @@ class HemisphereHeatmap:
         fig_h = 7.0   # taller than 2x3 to fit 3 rows
 
         # make 3x2 axes
-        fig, axes = plt.subplots(3, 2, figsize=(fig_w, fig_h), dpi=300)
+        fig, axes = plt.subplots(3, 2, figsize=(fig_w/2, fig_h/2), dpi=300)
         axes = axes.reshape(3, 2)
         # fig.patch.set_facecolor("#101014")
         # for ax in axes.ravel():
@@ -1085,7 +1217,8 @@ if __name__ == "__main__":
         show_cameras=False,
         show_gradient=True,
         colormap='hot',  # Try also: 'viridis', 'plasma', 'coolwarm', 'seismic'
-        save_path='C;\\Users\\rkhan\\Downloads\\hemisphere_heatmap.png'
+        save_path='C:\\Users\\rkhan\\Downloads\\hemisphere_heatmap.png'
     )
 
     print("Visualization saved to hemisphere_heatmap.png")
+
