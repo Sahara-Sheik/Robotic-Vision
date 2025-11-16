@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Process 112 Camera Data for Hemisphere Visualization
-Correctly reads MSE values
+Correctly reads MSE values from the vp_vgg19_128_0001 column
 """
 
 import os
@@ -18,10 +18,10 @@ from hemisphere_with_robot import (
     plot_hemisphere_with_robot_topdown,
     plot_hemisphere_with_robot_combined
 )
-# from create_stacked_hemisphere_heatmaps import create_stacked_heatmaps_from_folders
 
 
-class Camera112Processor:
+
+class Camera112Processor_multi:
     """Process data from 112 cameras arranged on hemisphere"""
 
     def __init__(self, base_folder, camera_placements_file):
@@ -103,62 +103,79 @@ class Camera112Processor:
 
         return hemisphere_coords
 
-    def read_mse_values(self):
-        """Read MSE values from each camera's folder """
-        print("\nReading MSE values from camera folders...")
+    def read_mse_values(
+        self,
+        model_column="vp_vgg19_128_0001",
+        mse_filename="all_msecomparison_values.csv",
+    ):
+        """
+        Read MSE values for a given model from each camera's folder.
+
+        Args
+        ----
+        model_column : str
+            Name of the column in the all_msecomparison_values.csv file
+            (e.g. 'vp_conv_vae_128_0001', 'vp_vgg19_128_0001', ...).
+        mse_filename : str
+            Name of the MSE csv file inside vp_comp_flow_all.
+        """
+        print(f"\nReading MSE values from '{mse_filename}' using column '{model_column}'...")
+
+        # reset per-component dict for this model
+        self.mse_data = {comp: {} for comp in self.components}
 
         found_count = 0
         missing_count = 0
 
-        # Map camera numbers to device folder names
         for i in range(self.n_cameras):
             camera_name = f"camera{i:03d}"
             device_folder = f"VisualProprioception_flow_00dev{i:03d}"
 
-            # Build path to MSE file
-            # mse_path = self.base_folder / device_folder / "result" / "visual_proprioception" / "vp_comp_flow_all" / "msecomparison_values.csv"
             mse_path = (
                 self.base_folder
                 / device_folder
                 / "result"
                 / "visual_proprioception"
                 / "vp_comp_flow_all"
-                / "msecomparison_values.csv"
+                / mse_filename
             )
+
             if mse_path.exists():
                 found_count += 1
                 try:
-                    # Read the CSV file properly
                     df = pd.read_csv(mse_path)
 
-                    # The MSE values are in the second column (vp_vgg19_128_0001)
-                    # The component names are in the first column (Title)
+                    if model_column not in df.columns:
+                        print(
+                            f"  ⚠ Column '{model_column}' not found in "
+                            f"{mse_path.name} for {camera_name}. "
+                            f"Available: {list(df.columns)}"
+                        )
+                        continue
 
-                    for index, row in df.iterrows():
-                        component = row.iloc[0]  # First column: component name
+                    # first column is the component name (e.g. 'height', 'distance', ...)
+                    for _, row in df.iterrows():
+                        component = str(row.iloc[0]).strip()
                         if component in self.components:
-                            mse_value = row.iloc[1]  # Second column: MSE value
-                            self.mse_data[component][camera_name] = float(mse_value)
+                            mse_value = float(row[model_column])
+                            self.mse_data[component][camera_name] = mse_value
 
                 except Exception as e:
                     print(f"  Error reading {mse_path}: {e}")
-                    # Use default values
+                    # fall back to default values with small random jitter
                     for component in self.components:
                         base_mse = self.default_mse[component]
-                        # Add variation
                         variation = np.random.uniform(-0.02, 0.02)
                         self.mse_data[component][camera_name] = base_mse + variation
+
             else:
                 missing_count += 1
-                # Use default values with position-based variation for missing files
 
-
-                # Get camera position for variation
+                # use position-based default pattern if we know the camera pose
                 if camera_name in self.camera_positions:
                     pos = self.camera_positions[camera_name]
-                    x, y, z = pos['x'], pos['y'], pos['z']
+                    x, y, z = pos["x"], pos["y"], pos["z"]
 
-                    # Normalize position
                     x_norm = x / 1.2
                     y_norm = y / 1.2
                     z_norm = z / 1.2
@@ -166,27 +183,22 @@ class Camera112Processor:
                     for component in self.components:
                         base_mse = self.default_mse[component]
 
-                        # Add position-based variation
-                        if component == 'height':
-                            # Better (lower MSE) at higher positions
+                        if component == "height":
                             variation = -0.05 * z_norm
-                        elif component == 'distance':
-                            # Better at mid-range
-                            dist = np.sqrt(x_norm**2 + y_norm**2)
-                            variation = -0.03 * np.exp(-2 * (dist - 0.5)**2)
-                        elif component == 'heading':
-                            # Variation based on angle
+                        elif component == "distance":
+                            dist = np.sqrt(x_norm ** 2 + y_norm ** 2)
+                            variation = -0.03 * np.exp(-2 * (dist - 0.5) ** 2)
+                        elif component == "heading":
                             angle = np.arctan2(y_norm, x_norm)
                             variation = 0.02 * np.sin(2 * angle)
                         else:
-                            # Random variation
                             variation = np.random.uniform(-0.03, 0.03)
 
                         mse_value = base_mse + variation
-                        mse_value = np.clip(mse_value, 0.01, 0.5)  # Keep in reasonable range
+                        mse_value = np.clip(mse_value, 0.01, 0.5)
                         self.mse_data[component][camera_name] = mse_value
                 else:
-                    # Fallback to default with random variation
+                    # final fallback: default + small noise
                     for component in self.components:
                         base_mse = self.default_mse[component]
                         variation = np.random.uniform(-0.02, 0.02)
@@ -194,11 +206,15 @@ class Camera112Processor:
 
         print(f"  Found {found_count} MSE files, {missing_count} missing (using defaults)")
 
-        #  statistics
+        # simple stats per component
         for component in self.components:
             values = list(self.mse_data[component].values())
             if values:
-                print(f"  {component}: {len(values)} cameras, MSE range [{min(values):.4f}, {max(values):.4f}]")
+                print(
+                    f"  {component}: {len(values)} cameras, "
+                    f"MSE range [{min(values):.4f}, {max(values):.4f}]"
+                )
+
 
     def generate_component_csv(self, component, output_dir="output"):
         """Generate CSV file for a single component"""
@@ -257,16 +273,10 @@ class Camera112Processor:
         global_mse_min = np.min(all_mse)
         global_mse_max = np.max(all_mse)
 
-        print(f"\n Global MSE: min={global_mse_min:.4f}, max={global_mse_max:.4f}")
+        print(f"\nGlobal MSE: min={global_mse_min:.4f}, max={global_mse_max:.4f}")
 
-        # Add accuracy to each dataframe using GLOBAL scale
+        # Save CSVs with MSE values only (no accuracy conversion needed)
         for component, df in dataframes.items():
-            mse = df['mse'].values
-            # Normalize: worst MSE → 0, best MSE → 1
-            accuracy = 1 - (mse - global_mse_min) / (global_mse_max - global_mse_min)
-            df['accuracy'] = accuracy
-
-            # Save updated CSV
             csv_file = os.path.join(output_dir, f"{component}_hemisphere_data.csv")
             df.to_csv(csv_file, index=False)
 
@@ -295,13 +305,12 @@ class Camera112Processor:
             print(f"\n  Processing {component}...")
             df = pd.read_csv(csv_file)
 
-            # Create visualizer
+            # Create visualizer with MSE values
             vis = HemisphereHeatmap(n_cameras=len(df))
             vis.camera_positions = df[['x', 'y', 'z']].values
 
-            # Use MSE values directly (lower is better)
-            mse = df['mse'].values
-            vis.mse_values = mse
+            # Use MSE values directly (not converted to accuracy)
+            vis.mse_values = df['mse'].values
 
             # Normalize positions to sit on hemisphere
             r = np.linalg.norm(vis.camera_positions, axis=1, keepdims=True)
@@ -314,7 +323,7 @@ class Camera112Processor:
             # fig_big = vis.plot_hemisphere_heatmap(
             #     show_cameras=False,
             #     show_gradient=True,
-            #     colormap='hot',
+            #     colormap='hot_r',
             #     save_path=individual_path
             # )
             # plt.close(fig_big)
@@ -323,8 +332,7 @@ class Camera112Processor:
             paper_base = os.path.join(output_dir, component)
             # vis.plot_paper_topdown(paper_base + "_topdown_cvpr.png", cmap='hot_r', label=component)
             vis.plot_paper_3d(paper_base + "_3d_cvpr.png", cmap='hot_r', label=component,robot_image_path=ROBOT_IMAGE_PATH_3D)
-            # vis.plot_paper_gradient3d(paper_base + "_gradient_Magnitude_3d_cvpr.png", label=component)
-
+            # vis.plot_paper_gradient3d(paper_base + "_grad3d_cvpr.png", label=component)
 
             # ============================================================
             # ADD ROBOT TO ALL VISUALIZATIONS
@@ -350,8 +358,7 @@ class Camera112Processor:
             #     cmap='hot',
             #     robot_alpha=0.5,      # Adjust: 0.3=subtle, 0.5=balanced, 0.7=visible
             #     robot_size=0.21,  # Proportional
-            #     show_cameras=False,    # Set True to show  our camera dots
-            #     show_gradient=True
+            #     show_cameras=False    # Set True to show  our camera dots
             # )
             # print(f"    ✓ Created transparent robot view")
 
@@ -364,8 +371,7 @@ class Camera112Processor:
             #     cmap='hot',
             #     robot_alpha=0.35,     # Very transparent
             #     robot_size=0.21,  # Subtle version
-            #     show_cameras=False,    # Set True to show  our camera dots
-            #     show_gradient=True
+            #     show_cameras=False
             # )
             # print(f"    ✓ Created subtle robot view")
 
@@ -390,8 +396,7 @@ class Camera112Processor:
             #     cmap='hot',
             #     robot_alpha=0.5,
             #     robot_size=0.21,  # Proportional 10 inches in 1.2 m
-            #     show_cameras=False,    # Set True to show  our camera dots
-            #     show_gradient=True
+            #     show_cameras=False     # Show camera dots
             # )
             # print(f"    ✓ Created robot view with camera positions")
 
@@ -403,41 +408,32 @@ class Camera112Processor:
             print(f"    Creating CVPR versions...")
 
             # CVPR: Top-down
-            cvpr_topdown = os.path.join(output_dir, f"{component}_robot_topdown_cvpr.png")
+            # cvpr_topdown = os.path.join(output_dir, f"{component}_robot_topdown_cvpr.png")
             # plot_hemisphere_with_robot_topdown(
             #     vis, cvpr_topdown, ROBOT_IMAGE_PATH_TOP,
-            #     cmap='hot_r', robot_size=0.21
+            #     cmap='hot', robot_size=0.21
             # )
-            plot_hemisphere_transparent_robot(
-                vis, cvpr_topdown, ROBOT_IMAGE_PATH_TOP,
-                cmap='hot_r', robot_alpha=1, robot_size=0.21,
-                show_cameras=False,    # Set True to show  our camera dots
-                show_gradient=True
-            )
+
             # CVPR: Transparent
-            # cvpr_transparent = os.path.join(output_dir, f"{component}_robot_transparent_cvpr.png")
-            # plot_hemisphere_transparent_robot(
-            #     vis, cvpr_transparent, ROBOT_IMAGE_PATH_TOP,
-            #     cmap='hot', robot_alpha=0.5, robot_size=0.21,
-            #     show_cameras=False,    # Set True to show  our camera dots
-            #     show_gradient=True
-            # )
+            cvpr_transparent = os.path.join(output_dir, f"{component}_robot_topdown_cvpr.png")
+            plot_hemisphere_transparent_robot(
+                vis, cvpr_transparent, ROBOT_IMAGE_PATH_TOP,
+                cmap='hot_r', robot_alpha=10, robot_size=0.21, show_cameras=False
+            )
 
             # CVPR: Subtle
             cvpr_subtle = os.path.join(output_dir, f"{component}_robot_subtle_cvpr.png")
             plot_hemisphere_transparent_robot(
                 vis, cvpr_subtle, ROBOT_IMAGE_PATH_TOP,
-                cmap='hot_r', robot_alpha=0.35, robot_size=0.21,
-                show_cameras=True,    # Set True to show  our camera dots
-                show_gradient=True
+                cmap='hot_r', robot_alpha=0.21, robot_size=0.21, show_cameras=False
             )
 
-            # # CVPR: Combined
-            # cvpr_combined = os.path.join(output_dir, f"{component}_robot_combined_cvpr.png")
-            # plot_hemisphere_with_robot_combined(
-            #     vis, cvpr_combined, ROBOT_IMAGE_PATH_3D,ROBOT_IMAGE_PATH_TOP,
-            #     cmap='hot_r',show_cameras=False   # Set True to show  our camera dots
-            # )
+            # CVPR: Combined
+            cvpr_combined = os.path.join(output_dir, f"{component}_robot_combined_cvpr.png")
+            plot_hemisphere_with_robot_combined(
+                vis, cvpr_combined, ROBOT_IMAGE_PATH_3D,ROBOT_IMAGE_PATH_TOP,
+                cmap='hot_r', show_cameras=False
+            )
 
             print(f"    ✓ Created 4 CVPR versions")
 
@@ -459,7 +455,7 @@ class Camera112Processor:
                 axis._axinfo["grid"]["linewidth"] = 0
 
             # Create mesh
-            X, Y, Z, _, _ = vis.create_hemisphere_mesh(resolution=90)
+            X, Y, Z, _, _ = vis.create_hemisphere_mesh(resolution=30)
             mse_mesh = vis.interpolate_mse(X, Y, Z)
 
             # Plot surface
@@ -578,7 +574,8 @@ class Camera112Processor:
                 ax.set_ylim([-vis.radius*1.05, vis.radius*1.05])
                 ax.set_xticks([])
                 ax.set_yticks([])
-                ax.set_title(comp['name'].replace('_', ' ').title(), fontsize=11, pad=10)
+                ax.set_title(comp['name'].replace('_', ' ').title(), fontsize=11, pad=1)
+                ax.set_axis_off()
 
             # Add shared colorbar
             from matplotlib.colors import Normalize
@@ -587,18 +584,9 @@ class Camera112Processor:
             sm = plt.cm.ScalarMappable(cmap='hot_r', norm=norm)
             sm.set_array([])
 
-            HemisphereHeatmap.save_shared_accuracy_colorbar(
-                os.path.join(output_dir, "shared_accuracy_colorbar.png"),
-                vmin=all_vals.min(),
-                vmax=all_vals.max(),
-                cmap="hot_r",
-                fig_width_in=3.25,
-                dpi=300,
-            )
-
             cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.70])
             cbar = fig.colorbar(sm, cax=cbar_ax)
-            # cbar.set_label('MSE', fontsize=12)
+            cbar.set_label('MSE', fontsize=12)
 
             # fig.suptitle('All Components with Robot Configuration', fontsize=14, y=0.98)
             plt.tight_layout(rect=[0, 0, 0.90, 0.97])
@@ -647,9 +635,9 @@ class Camera112Processor:
             if os.path.exists(csv_file):
                 df = pd.read_csv(csv_file)
 
-                # Best and worst cameras
-                best_idx = df['mse'].idxmin()  # Lower MSE is better
-                worst_idx = df['mse'].idxmax()  # Higher MSE is worse
+                # Best and worst cameras (based on MSE - lower is better)
+                best_idx = df['mse'].idxmin()  # Changed from accuracy.idxmax()
+                worst_idx = df['mse'].idxmax()  # Changed from accuracy.idxmin()
 
                 summary.append({
                     'Component': component,
@@ -661,10 +649,6 @@ class Camera112Processor:
                     'Best_Camera_MSE': df.loc[best_idx, 'mse'],
                     'Worst_Camera': df.loc[worst_idx, 'camera'],
                     'Worst_Camera_MSE': df.loc[worst_idx, 'mse'],
-                    'Mean_MSE': df['mse'].mean(),
-                    'Std_MSE': df['mse'].std(),
-                    'Min_MSE': df['mse'].min(),
-                    'Max_MSE': df['mse'].max()
                 })
 
         summary_df = pd.DataFrame(summary)
@@ -679,61 +663,367 @@ class Camera112Processor:
 
         return summary_df
 
+    def generate_model_mse_table(self, output_dir, model_name):
+        """
+        Generate a single CSV for this model with:
+        - one row per camera
+        - one column per component (6 total: height, distance, heading, wrist_angle,
+          wrist_rotation, gripper)
+        """
+        os.makedirs(output_dir, exist_ok=True)
+
+        hemisphere_coords = self.camera_to_hemisphere_coords()
+
+        rows = []
+        for camera_name in sorted(self.camera_positions.keys(),
+                                  key=lambda x: int(x.replace("camera", ""))):
+            row = {"camera": camera_name}
+
+            # Add coordinates if available
+            coords = hemisphere_coords.get(camera_name, None)
+            if coords is not None:
+                row["x"] = coords["x"]
+                row["y"] = coords["y"]
+                row["z"] = coords["z"]
+                row["original_x"] = coords["original_x"]
+                row["original_y"] = coords["original_y"]
+                row["original_z"] = coords["original_z"]
+
+            # One column per component = raw MSE for that component
+            for comp in self.components:
+                # if for some reason a camera is missing, use NaN
+                row[comp] = self.mse_data.get(comp, {}).get(camera_name, np.nan)
+
+            rows.append(row)
+
+        df = pd.DataFrame(rows)
+
+        # e.g.: vp_vgg19_128_0001_all_components_by_camera.csv
+        out_name = f"{model_name}_all_components_by_camera.csv"
+        out_path = os.path.join(output_dir, out_name)
+        df.to_csv(out_path, index=False)
+
+        print(f"  ✓ Saved per-camera all-component MSE table to {out_path}")
+        return df
+
+def plot_mse_range_across_models(output_root, model_columns, components):
+        """
+        Create a grouped bar plot of MSE range (max-min) for each component and model.
+
+        - Reads each model's component_summary.csv
+        - For each (model, component), computes Range_MSE = Max_MSE - Min_MSE
+        - Saves a single PNG in the output_root directory.
+        """
+        print("\nCreating MSE range bar plot across models...")
+
+        records = []
+        for model in model_columns:
+            model_dir = os.path.join(output_root, model)
+            summary_path = os.path.join(model_dir, "component_summary.csv")
+
+            if not os.path.exists(summary_path):
+                print(f"  ⚠ Summary file not found for {model}, skipping.")
+                continue
+
+            df = pd.read_csv(summary_path)
+
+            for comp in components:
+                row = df[df['Component'] == comp]
+                if row.empty:
+                    print(f"  ⚠ Component '{comp}' not found for model {model}, skipping.")
+                    continue
+
+                min_mse = float(row['Min_MSE'].values[0])
+                max_mse = float(row['Max_MSE'].values[0])
+
+                records.append({
+                    'Model': model,
+                    'Component': comp,
+                    'Min_MSE': min_mse,
+                    'Max_MSE': max_mse,
+                    'Range_MSE': max_mse - min_mse,
+                })
+
+        if not records:
+            print("No data available to plot MSE ranges.")
+            return
+
+        plot_df = pd.DataFrame(records)
+
+        # Prepare grouped bar positions
+        components_order = components
+        n_comp = len(components_order)
+        models = sorted(plot_df['Model'].unique())
+        n_models = len(models)
+
+        x = np.arange(n_comp)
+        width = 0.8 / n_models  # total group width ~0.8
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+
+        for i, model in enumerate(models):
+            data = plot_df[plot_df['Model'] == model]
+
+            # Ensure we follow the same component order on X
+            ranges = []
+            for comp in components_order:
+                row = data[data['Component'] == comp]
+                if row.empty:
+                    ranges.append(np.nan)
+                else:
+                    ranges.append(row['Range_MSE'].values[0])
+
+            # Center the group of bars around each x position
+            x_offsets = x + (i - n_models / 2) * width + width / 2
+            ax.bar(x_offsets, ranges, width, label=model)
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(components_order, rotation=45, ha='right')
+        ax.set_ylabel("MSE Range (Max - Min)")
+        ax.set_title("MSE Range per Component Across Models")
+        ax.legend(title="Model")
+        ax.grid(axis='y', alpha=0.3)
+
+        fig.tight_layout()
+        out_path = os.path.join(output_root, "mse_range_by_model_and_component.png")
+        fig.savefig(out_path, dpi=300)
+        plt.close(fig)
+
+        print(f"\n✓ Saved MSE range bar plot to: {out_path}")
+
+def make_height_cvpr_2x3_across_models(
+        output_root,
+        model_columns,
+        height_png_name="height_robot_topdown_cvpr.png",
+        out_name="height_across_models_cvpr_2x3.png",
+        titles=("VAE-128","VAE-256","VGG19-128","VGG19-256","ResNet50-128","ResNet50-256"),
+    ):
+        """
+        Build a CVPR-style 2×3 grid using HEIGHT panels saved in each model's output dir.
+        Looks for <OUTPUT_DIR>/<model_column>/<height_png_name> created earlier.
+        Also reads <OUTPUT_DIR>/<model_column>/height_hemisphere_data.csv to compute
+        a shared MSE colorbar range.
+        """
+        from pathlib import Path
+        from PIL import Image, ImageDraw, ImageFont
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import Normalize
+
+        output_root = Path(output_root)
+        six_images = []
+        csv_paths = []
+
+        # Collect the six height images (+ CSVs for vmin/vmax)
+        for mc in model_columns:
+            mdir = output_root / mc
+            img_path = mdir / height_png_name
+            if not img_path.exists():
+                raise FileNotFoundError(f"Missing HEIGHT panel for {mc}: {img_path}")
+            six_images.append(Image.open(img_path).convert("RGB"))
+
+            csv_path = mdir / "height_hemisphere_data.csv"
+            if csv_path.exists():
+                csv_paths.append(csv_path)
+
+        # Compute vmin/vmax from CSVs if available
+        vmin = None
+        vmax = None
+        if csv_paths:
+            import pandas as pd
+            all_vals = []
+            for p in csv_paths:
+                df = pd.read_csv(p)
+                if "mse" in df.columns:
+                    all_vals.extend(df["mse"].values.tolist())
+            if all_vals:
+                vmin = float(np.min(all_vals))
+                vmax = float(np.max(all_vals))
+
+        # Light crop of white margins per tile
+        cropped = []
+        for img in six_images:
+            arr = np.asarray(img)
+            thr = 252
+            mask = ~((arr[...,0]>=thr)&(arr[...,1]>=thr)&(arr[...,2]>=thr))
+            rows = np.where(mask.any(axis=1))[0]
+            cols = np.where(mask.any(axis=0))[0]
+            if rows.size and cols.size:
+                img = img.crop((cols.min(), rows.min(), cols.max()+1, rows.max()+1))
+            cropped.append(img)
+        six_images = cropped
+
+        # Layout
+        nrows, ncols = 3, 2
+        w, h = six_images[0].size
+        pad = int(0.07 * w)
+        title_h = int(0.18 * h)
+        bar_h = int(0.22 * h)
+        bar_gap = int(0.12 * h)
+
+        canvas_w = ncols * w + (ncols - 1) * pad
+        canvas_h = nrows * (h + title_h) + (nrows - 1) * pad + bar_gap + bar_h
+
+        canvas = Image.new("RGB", (canvas_w, canvas_h), "white")
+
+        # Paste 2×3
+        idx = 0
+        positions = []
+        for r in range(nrows):
+            for c in range(ncols):
+                x = c * (w + pad)
+                y = r * (h + title_h + pad)
+                canvas.paste(six_images[idx], (x, y))
+                positions.append((x, y))
+                idx += 1
+
+        # Titles
+        if titles is not None:
+            draw = ImageDraw.Draw(canvas)
+            try:
+                font = ImageFont.truetype("arial.ttf", size=max(12, h // 18))
+            except Exception:
+                font = ImageFont.load_default()
+            for i, (x, y) in enumerate(positions):
+                label = titles[i] if i < len(titles) else ""
+                tw, th = draw.textbbox((0, 0), label, font=font)[2:]
+                draw.text((x + (w - tw)//2, y + h + max(2, title_h//5)),
+                        label, fill="black", font=font)
+
+        # Colorbar (visual consistency with 'hot_r')
+        fig = plt.figure(figsize=(8, 0.6), dpi=300)
+        ax = fig.add_axes([0.08, 0.35, 0.84, 0.3])
+        if vmin is None or vmax is None:
+            vmin_, vmax_ = 0.0, 1.0
+        else:
+            vmin_, vmax_ = vmin, vmax
+        norm = Normalize(vmin=vmin_, vmax=vmax_)
+        sm = plt.cm.ScalarMappable(norm=norm, cmap="hot_r")
+        sm.set_array([])
+        cbar = plt.colorbar(sm, cax=ax, orientation="horizontal")
+        cbar.ax.tick_params(labelsize=18)
+        cbar.set_label("MSE", fontsize=20)
+
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            bar_path = tmp.name
+        fig.savefig(bar_path, dpi=300, bbox_inches="tight", pad_inches=0.05, facecolor="white")
+        plt.close(fig)
+
+        bar_img = Image.open(bar_path).convert("RGB")
+        os.remove(bar_path)
+
+        # Tight crop and resize colorbar, then paste
+        arr = np.asarray(bar_img)
+        thr = 252
+        mask = ~((arr[...,0]>=thr)&(arr[...,1]>=thr)&(arr[...,2]>=thr))
+        rows = np.where(mask.any(axis=1))[0]
+        cols = np.where(mask.any(axis=0))[0]
+        if rows.size and cols.size:
+            bar_img = bar_img.crop((cols.min(), rows.min(), cols.max()+1, rows.max()+1))
+        bar_img = bar_img.resize((canvas_w, bar_h), Image.Resampling.LANCZOS)
+        canvas.paste(bar_img, (0, canvas_h - bar_h))
+
+        out_path = output_root / out_name
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        canvas.save(out_path)
+        if out_path.suffix.lower() == ".png":
+            canvas.save(out_path.with_suffix(".pdf"))
+        print(f"\n✓ Saved HEIGHT cross-model CVPR 2×3 to: {out_path}")
+
 
 def main():
-    """Main function to process 112 camera data"""
+    """Main function to process 112 camera data for multiple models."""
+
     ##############################################################################
-    #####                       Sahara's path                                #####
+    #                   UPDATE THESE PATHS FOR YOUR MACHINE                      #
     ##############################################################################
-    #  Update these paths to match your system
-    BASE_FOLDER = "C:\\Users\\rkhan\\Downloads\\112results"
-    CAMERA_PLACEMENTS_FILE = "C:\\Users\\rkhan\\Downloads\\camera_placements.txt"  # Update this path
-    OUTPUT_DIR = "C:\\Users\\rkhan\\Downloads\\hemisphere_output_with_Robot35"  # Output directory
+    BASE_FOLDER = "C:\\Users\\rkhan\\Downloads\\VGG_OK_All_models_data"
+    CAMERA_PLACEMENTS_FILE = "C:\\Users\\rkhan\\Downloads\\camera_placements.txt"
+    OUTPUT_DIR = "C:\\Users\\rkhan\\Downloads\\hemisphere_output_models_newVGG-last"
+
+    # robot images (unchanged)
     ROBOT_IMAGE_PATH_3D = "C:\\Users\\rkhan\\Downloads\\robot.png"
     ROBOT_IMAGE_PATH_TOP = "C:\\Users\\rkhan\\Downloads\\robot_top.png"
+    MODEL_COLUMNS = ["vp_conv_vae_128_0001", "vp_conv_vae_256_0001", "vp_vgg19_128_0001", "vp_vgg19_256_0001", "vp_resnet50_128_0001", "vp_resnet50_256_0001"]
 
+    # all model columns we want to process
+    MODEL_COLUMNS = [
+        "vp_conv_vae_128_0001",
+        "vp_vgg19_128_0001",
+        "vp_resnet50_128_0001",
+        "vp_conv_vae_256_0001",
+        "vp_vgg19_256_0001",
+        "vp_resnet50_256_0001",
+    ]
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("112 CAMERA HEMISPHERE VISUALIZATION PROCESSOR")
-    print("="*70)
-    print(f"\nConfiguration:")
-    print(f"  Base folder: {BASE_FOLDER}")
-    print(f"  Camera placements: {CAMERA_PLACEMENTS_FILE}")
-    print(f"  Output directory: {OUTPUT_DIR}")
+    print("=" * 70)
+    print(f"\nBase folder:      {BASE_FOLDER}")
+    print(f"Camera placements:{CAMERA_PLACEMENTS_FILE}")
+    print(f"Output root:      {OUTPUT_DIR}")
 
-    # Create processor
-    processor = Camera112Processor(BASE_FOLDER, CAMERA_PLACEMENTS_FILE)
+    processor = Camera112Processor_multi(BASE_FOLDER, CAMERA_PLACEMENTS_FILE)
+    processor.parse_camera_placements()  # only once
+
+    # loop over each model column
+    for model_col in MODEL_COLUMNS:
+        print("\n" + "#" * 70)
+        print(f"Processing model: {model_col}")
+        print("#" * 70)
+
+        model_output_dir = os.path.join(OUTPUT_DIR, model_col)
+        os.makedirs(model_output_dir, exist_ok=True)
+
+        # read MSE for this model
+        processor.read_mse_values(
+            model_column=model_col,
+            mse_filename="all_msecomparison_values.csv",
+        )
+
+        # generate CSVs and visualizations into that model’s folder
+        dataframes = processor.generate_all_csvs(model_output_dir)
+        processor.generate_model_mse_table(model_output_dir, model_col)
+
+        processor.create_visualizations(model_output_dir)
+        processor.generate_summary_report(model_output_dir)
+
+        print(f"\nFinished model {model_col}. Outputs in: {model_output_dir}")
+
+    print("\n" + "=" * 70)
+    print("PROCESSING COMPLETE FOR ALL MODELS!")
+    print("=" * 70)
 
 
-    # Process data
-    processor.parse_camera_placements()
-    processor.read_mse_values()
+    # NEW: create comparison bar plot of MSE ranges across models
+    plot_mse_range_across_models(
+        output_root=OUTPUT_DIR,
+        model_columns=MODEL_COLUMNS,
+        components=processor.components,
+    )
 
-    # Generate outputs
-    dataframes = processor.generate_all_csvs(OUTPUT_DIR)
-    processor.create_visualizations(OUTPUT_DIR)
-
-    # processor.create_visualizations(OUTPUT_DIR, robot_image_path=ROBOT_IMAGE_PATH_3D)
-
-    # processor.create_visualizations(OUTPUT_DIR)
-    processor.generate_summary_report(OUTPUT_DIR)
-
-
-
-
-
-    print("\n" + "="*70)
-    print("PROCESSING COMPLETE!")
-    print("="*70)
-    print(f"\nGenerated files in {OUTPUT_DIR}:")
-    print("  - Individual component CSVs: [component]_hemisphere_data.csv")
-    print("  - Individual hemisphere plots: [component]_hemisphere.png")
-    print("  - Combined visualization: all_components_hemispheres.png")
-    print("  - Summary report: component_summary.csv")
-    print("\nMSE values are now correctly read from the 'vp_vgg19_128_0001' column!")
+        # NEW: HEIGHT-only 2×3 grid across the six models
+    make_height_cvpr_2x3_across_models(
+        output_root=OUTPUT_DIR,
+        model_columns=MODEL_COLUMNS,
+        height_png_name="height_robot_topdown_cvpr.png",  # produced per-model earlier
+        out_name="height_across_models_cvpr_2x3.png",
+        titles=("VAE-128","VAE-256","VGG19-128","VGG19-256","ResNet50-128","ResNet50-256"),
 
 
+    )
+
+    # Build the six dirs from your existing OUTPUT_DIR and MODEL_COLUMNS
+    dirs = [str(Path(OUTPUT_DIR) / col) for col in MODEL_COLUMNS]  # must be 6 in display order
+
+    # Make the 2×3 HEIGHT panel with one shared colorbar (same style as make_cvpr_2x3_grid)
+    HemisphereHeatmap.make_height_cvpr_2x3_from_folders(
+        model_dirs=dirs,
+        output_path=str(Path(OUTPUT_DIR) / "height_across_models_cvpr_2x3-without-labels.png"),
+        csv_name="height_hemisphere_data.csv",   # this is the CSV each model folder already writes
+        cmap="hot_r",
+    )
 if __name__ == "__main__":
     main()
-
 

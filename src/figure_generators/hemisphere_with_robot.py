@@ -13,6 +13,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.image as mpimg
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from mpl_toolkits.mplot3d import proj3d
+from matplotlib.ticker import MaxNLocator
 
 def add_robot_to_hemisphere_3d(ax, robot_image_path, position=(-0.4, 0, 0),
                                 size=0.10, rotation_angle=0):
@@ -36,7 +37,7 @@ def add_robot_to_hemisphere_3d(ax, robot_image_path, position=(-0.4, 0, 0),
 #     """
     img = mpimg.imread(robot_image_path)
     from scipy import ndimage
-    # img = ndimage.rotate(img, -90, reshape=True, order=1)
+    # img = ndimage.rotate(img, 135, reshape=True, order=1)
     imagebox = OffsetImage(img, zoom=size)
 
     x3d, y3d, z3d = position
@@ -101,7 +102,7 @@ def add_robot_to_hemisphere_3d(ax, robot_image_path, position=(-0.4, 0, 0),
 
 
 def plot_hemisphere_with_robot_topdown(vis, output_path, robot_image_path=None,
-                                       cmap='hot', robot_size=0.40):
+                                       cmap='hot_r', robot_size=0.40):
     """
     Create a top-down view of hemisphere with robot image in center.
     This is the most effective way to show robot in the visualization.
@@ -118,17 +119,55 @@ def plot_hemisphere_with_robot_topdown(vis, output_path, robot_image_path=None,
     ax = fig.add_subplot(111)
 
     # Create hemisphere mesh
-    X, Y, Z, THETA, PHI = vis.create_hemisphere_mesh(resolution=50)
+    X, Y, Z, THETA, PHI = vis.create_hemisphere_mesh(resolution=100)
 
     # Interpolate accuracy
-    acc_mesh = vis.interpolate_accuracy(X, Y, Z)
+    mse_mesh = vis.interpolate_mse(X, Y, Z)
 
     # Create heatmap
     from scipy.ndimage import gaussian_filter
-    acc_smooth = gaussian_filter(acc_mesh, sigma=1)
+    mse_smooth = gaussian_filter(mse_mesh, sigma=1)
 
     # Plot contour (X, Y already scaled to vis.radius which is 1.2m)
-    contourf = ax.contourf(X, Y, acc_smooth, levels=25, cmap=cmap)
+    contourf = ax.contourf(X, Y, mse_smooth, levels=25, cmap=cmap)
+
+    # Add gradient arrows to show direction of improvement
+    dx_raw, dy_raw = vis.compute_gradient(mse_smooth, X, Y, Z)
+    grad_mag = np.sqrt(dx_raw**2 + dy_raw**2)
+    max_mag = np.max(grad_mag)
+
+    if max_mag > 1e-12:
+        # Normalize gradient direction
+        ux = dx_raw / (max_mag + 1e-12)
+        uy = dy_raw / (max_mag + 1e-12)
+
+        # Normalize magnitudes to [0, 1]
+        grad_norm = grad_mag / max_mag
+
+        # Maximum arrow length in hemisphere units
+        L_max = 0.5 * vis.radius
+
+        # Final arrow components
+        dx = ux * grad_norm * L_max
+        dy = uy * grad_norm * L_max
+
+        # Subsample arrows so it's not too busy
+        step = 8
+        ax.quiver(
+            X[::step, ::step],
+            Y[::step, ::step],
+            dx[::step, ::step],
+            dy[::step, ::step],
+            color="tab:blue",
+            angles="xy",
+            scale_units="xy",
+            scale=1.0,
+            width=0.008,      # Increased from 0.004 - makes shaft thicker
+            headwidth=7,      # Increased from 5 - makes head wider
+            headlength=8,     # Increased from 6 - makes head longer
+            alpha=0.9,
+            zorder=5,  # Below robot (which is zorder=10)
+        )
 
     # Add circle boundary
     circle = plt.Circle((0, 0), vis.radius, fill=False,
@@ -184,20 +223,64 @@ def plot_hemisphere_with_robot_topdown(vis, output_path, robot_image_path=None,
     ax.set_ylabel('Y (m)', fontsize=10)
     # Title removed - will be added externally as needed
     ax.tick_params(labelsize=9)
+    ax.set_axis_off()
 
     # Add colorbar
     cbar = plt.colorbar(contourf, ax=ax, shrink=0.8,orientation='horizontal')
-    cbar.set_label('Accuracy', fontsize=10)
+    cbar.set_label('MSE', fontsize=10)
     cbar.ax.tick_params(labelsize=8)
 
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+
+    # Save to temporary file first
+    import tempfile
+    import os
+    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+        temp_path = tmp.name
+
+    plt.savefig(temp_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
+
+    # Aggressively crop white margins
+    img = Image.open(temp_path).convert("RGB")
+    img_array = np.array(img)
+
+    # Very aggressive threshold - only skip nearly pure white
+    threshold = 254
+
+    # Check all three channels
+    is_white = (img_array[:, :, 0] >= threshold) & \
+               (img_array[:, :, 1] >= threshold) & \
+               (img_array[:, :, 2] >= threshold)
+
+    # Find rows and columns with non-white content
+    non_white_rows = np.where(~is_white.all(axis=1))[0]
+    non_white_cols = np.where(~is_white.all(axis=0))[0]
+
+    if len(non_white_rows) > 0 and len(non_white_cols) > 0:
+        # Get bounding box with minimal padding
+        pad = 5  # Just 5 pixels to keep colorbar labels visible
+        top = max(0, non_white_rows.min() - pad)
+        bottom = min(img_array.shape[0], non_white_rows.max() + pad)
+        left = max(0, non_white_cols.min() - pad)
+        right = min(img_array.shape[1], non_white_cols.max() + pad)
+
+        # Crop to tight bounding box
+        img_cropped = img.crop((left, top, right, bottom))
+    else:
+        img_cropped = img
+
+    # Clean up temp file
+    os.unlink(temp_path)
+
+    # Save final cropped image
+    img_cropped.save(output_path)
+
     print(f"Saved hemisphere with robot to {output_path}")
 
 
 def plot_hemisphere_with_robot_3d(vis, output_path, robot_image_path=None,
-                                  cmap='hot', show_cameras=False):
+                                  cmap='hot_r', show_cameras=False):
     """
     Create a 3D hemisphere view with robot representation at center.
 
@@ -215,17 +298,17 @@ def plot_hemisphere_with_robot_3d(vis, output_path, robot_image_path=None,
     X, Y, Z, THETA, PHI = vis.create_hemisphere_mesh(resolution=50)
 
     # Interpolate accuracy
-    acc_mesh = vis.interpolate_accuracy(X, Y, Z)
+    mse_mesh = vis.interpolate_mse(X, Y, Z)
 
     # Apply smoothing
     from scipy.ndimage import gaussian_filter
-    acc_smooth = gaussian_filter(acc_mesh, sigma=1)
+    mse_smooth = gaussian_filter(mse_mesh, sigma=1)
 
     # Plot hemisphere surface
     import matplotlib.cm as cm
     surf = ax.plot_surface(
         X, Y, Z,
-        facecolors=cm.get_cmap(cmap)(acc_smooth),
+        facecolors=cm.get_cmap(cmap)(mse_smooth),
         rstride=1, cstride=1,
         linewidth=0,
         antialiased=False,
@@ -274,11 +357,11 @@ def plot_hemisphere_with_robot_3d(vis, output_path, robot_image_path=None,
 
     # Add colorbar
     from matplotlib.colors import Normalize
-    norm = Normalize(vmin=acc_smooth.min(), vmax=acc_smooth.max())
+    norm = Normalize(vmin=mse_smooth.min(), vmax=mse_smooth.max())
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
+    sm.set_array(mse_smooth)
     cbar = plt.colorbar(sm, ax=ax, shrink=0.5, aspect=10, orientation='horizontal')
-    cbar.set_label('Accuracy', fontsize=10)
+    cbar.set_label('MSE', fontsize=10)
     cbar.ax.tick_params(labelsize=8)
 
     # Title removed
@@ -290,7 +373,7 @@ def plot_hemisphere_with_robot_3d(vis, output_path, robot_image_path=None,
 
 
 def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,robot_image_path_top,
-                                        cmap='hot', show_cameras=False):
+                                        cmap='hot_r', show_cameras=False):
     """
     Create a combined view with both 3D and top-down perspectives.
     Robot image is shown in the top-down view.
@@ -306,10 +389,10 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,ro
 
     # Create mesh and interpolate
     X, Y, Z, THETA, PHI = vis.create_hemisphere_mesh(resolution=50)
-    acc_mesh = vis.interpolate_accuracy(X, Y, Z)
+    mse_mesh = vis.interpolate_mse(X, Y, Z)
 
     from scipy.ndimage import gaussian_filter
-    acc_smooth = gaussian_filter(acc_mesh, sigma=1)
+    mse_smooth = gaussian_filter(mse_mesh, sigma=1)
 
     # LEFT: 3D View
     ax1 = fig.add_subplot(121, projection='3d')
@@ -317,7 +400,7 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,ro
     import matplotlib.cm as cm
     surf = ax1.plot_surface(
         X, Y, Z,
-        facecolors=cm.get_cmap(cmap)(acc_smooth),
+        facecolors=cm.get_cmap(cmap)(mse_smooth),
         rstride=1, cstride=1,
         linewidth=0,
         antialiased=False,
@@ -329,7 +412,7 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,ro
         cam = vis.camera_positions.copy()
         cam = cam / np.linalg.norm(cam, axis=1, keepdims=True) * (vis.radius * 1.05)
         ax1.scatter(cam[:, 0], cam[:, 1], cam[:, 2],
-                   s=20, c=vis.accuracy_values, cmap=cmap,
+                   s=20, c=vis.mse_values, cmap=cmap ,
                    edgecolors='black', linewidths=0.5,
                    depthshade=False, zorder=10)
 
@@ -359,7 +442,7 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,ro
     # RIGHT: Top-Down View with Robot Image
     ax2 = fig.add_subplot(122)
 
-    contourf = ax2.contourf(X, Y, acc_smooth, levels=25, cmap=cmap)
+    contourf = ax2.contourf(X, Y, mse_smooth, levels=25, cmap=cmap)
 
     # Circle boundary
     circle = plt.Circle((0, 0), vis.radius, fill=False,
@@ -408,7 +491,7 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,ro
     if show_cameras and vis.camera_positions is not None:
         ax2.scatter(vis.camera_positions[:, 0],
                    vis.camera_positions[:, 1],
-                   c=vis.accuracy_values, cmap=cmap,
+                   c=vis.mse_values, cmap=cmap ,
                    s=15, edgecolors='black', linewidths=0.3,
                    zorder=5)
 
@@ -422,13 +505,14 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,ro
 
     # Shared colorbar
     from matplotlib.colors import Normalize
-    norm = Normalize(vmin=acc_smooth.min(), vmax=acc_smooth.max())
+    norm = Normalize(vmin=mse_smooth.min(), vmax=mse_smooth.max())
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
 
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+
     cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-    cbar.set_label('Accuracy', fontsize=10)
+    cbar.set_label('MSE', fontsize=10)
     cbar.ax.tick_params(labelsize=8)
 
     plt.tight_layout()
@@ -438,8 +522,8 @@ def plot_hemisphere_with_robot_combined(vis, output_path, robot_image_path_3d,ro
 
 
 def plot_hemisphere_transparent_robot(vis, output_path, robot_image_path,
-                                     cmap='hot', robot_alpha=0.5,
-                                     robot_size=0.40, show_cameras=False):
+                                     cmap='hot_r', robot_alpha=0.5,
+                                     robot_size=0.40, show_cameras=False, show_gradient=True):
     """
     Create a top-down view with highly transparent robot that blends into heatmap.
     Perfect for showing robot "sitting on top" of the hemisphere.
@@ -461,19 +545,74 @@ def plot_hemisphere_transparent_robot(vis, output_path, robot_image_path,
     X, Y, Z, THETA, PHI = vis.create_hemisphere_mesh(resolution=60)
 
     # Interpolate accuracy
-    acc_mesh = vis.interpolate_accuracy(X, Y, Z)
+    mse_mesh = vis.interpolate_mse(X, Y, Z)
 
     from scipy.ndimage import gaussian_filter
-    acc_smooth = gaussian_filter(acc_mesh, sigma=1.5)
+    mse_smooth = gaussian_filter(mse_mesh, sigma=1.5)
+
+
+
+
+        # Add gradient arrows in 2D
+    # if show_gradient:
+    #         ax.quiver(X[::step, ::step], Y[::step, ::step],
+    #                   dx[::step, ::step], dy[::step, ::step],
+    #                   alpha=0.5, width=0.003)
+
+
+
+    # dx_raw, dy_raw = vis.compute_gradient(acc_smooth, X, Y, Z)
+    # grad_mag = np.sqrt(dx_raw**2 + dy_raw**2)
+    # max_mag = np.max(grad_mag)
+
+    # if max_mag < 1e-12:
+    #     ux = np.zeros_like(dx_raw)
+    #     uy = np.zeros_like(dy_raw)
+    # else:
+    #     ux = dx_raw / (max_mag + 1e-12)
+    #     uy = dy_raw / (max_mag + 1e-12)
+
+    # # normalize magnitudes [0,1]
+    # grad_norm = grad_mag / (max_mag + 1e-12)
+
+    # # choose max arrow length in *hemisphere* units
+    # L_max = 0.8 * vis.radius   # increase to 0.8*vis.radius if they still feel small
+
+    # # components for quiver in hemisphere coords
+    # dx = ux * grad_norm * L_max
+    # dy = uy * grad_norm * L_max
+
+    # # subsample grid so it’s not too busy
+    # step = 8
+    # Xq = X[::step, ::step]
+    # Yq = Y[::step, ::step]
+    # dxq = dx[::step, ::step] * 1.2   # scale arrows to match X_display/Y_display
+    # dyq = dy[::step, ::step] * 1.2
+
+    # ax.quiver(
+    #     Xq, Yq,
+    #     dxq, dyq,
+    #     color="tab:blue",
+    #     angles="xy",
+    #     scale_units="xy",
+    #     scale=1.0,
+    #     width=0.004,
+    #     headwidth=5,
+    #     headlength=6,
+    #     alpha=0.9,
+    #     zorder=12,      # below robot (15) but above heatmap
+    # )
+
+
 
     # Create heatmap with more levels for smoother look
-    contourf = ax.contourf(X, Y, acc_smooth, levels=40, cmap=cmap)
+    contourf = ax.contourf(X, Y, mse_smooth, levels=40, cmap=cmap)
 
     # Add camera positions behind robot
     if show_cameras and vis.camera_positions is not None:
         ax.scatter(vis.camera_positions[:, 0],
                   vis.camera_positions[:, 1],
-                  c=vis.accuracy_values, cmap=cmap,
+                  c=vis.mse_values, cmap=cmap,
                   s=25, edgecolors='white', linewidths=0.5,
                   alpha=0.7, zorder=5)
 
@@ -531,7 +670,43 @@ def plot_hemisphere_transparent_robot(vis, output_path, robot_image_path,
             print(f"Could not load robot image: {e}")
             ax.text(0, 0, '🤖', fontsize=60, ha='center', va='center',
                    alpha=robot_alpha, zorder=15)
+    # Add gradient arrows to show direction of improvement
+    dx_raw, dy_raw = vis.compute_gradient(mse_smooth, X, Y, Z)
+    grad_mag = np.sqrt(dx_raw**2 + dy_raw**2)
+    max_mag = np.max(grad_mag)
 
+    if max_mag > 1e-12:
+        # Normalize gradient direction
+        ux = dx_raw / (max_mag + 1e-12)
+        uy = dy_raw / (max_mag + 1e-12)
+
+        # Normalize magnitudes to [0, 1]
+        grad_norm = grad_mag / max_mag
+
+        # Maximum arrow length in hemisphere units
+        L_max = 0.5 * vis.radius
+
+        # Final arrow components
+        dx = ux * grad_norm * L_max
+        dy = uy * grad_norm * L_max
+
+        # Subsample arrows so it's not too busy
+        step = 8
+        ax.quiver(
+            X[::step, ::step],
+            Y[::step, ::step],
+            dx[::step, ::step],
+            dy[::step, ::step],
+            color="tab:blue",
+            angles="xy",
+            scale_units="xy",
+            scale=1.0,
+            width=0.008,      # Increased from 0.004 - makes shaft thicker
+            headwidth=7,      # Increased from 5 - makes head wider
+            headlength=8,     # Increased from 6 - makes head longer
+            alpha=0.9,
+            zorder=5,  # Below robot (which is zorder=10)
+        )
     # Add circle boundary
     circle = plt.Circle((0, 0), vis.radius, fill=False,
                        edgecolor='black', linewidth=2.5, zorder=20)
@@ -545,14 +720,30 @@ def plot_hemisphere_transparent_robot(vis, output_path, robot_image_path,
     ax.set_ylabel('Y (m)', fontsize=12)
     # Title removed - will be added externally as needed
     ax.tick_params(labelsize=10)
+    # turnoff a;; ax
+    ax.set_axis_off()
 
     # Add colorbar
+
+    # vmin, vmax = contourf.get_clim()
+    # ticks = np.linspace(vmin, vmax, 5)
+    # cbar = plt.colorbar(contourf, ax=ax, ticks=ticks, shrink=0.8, pad=0.05,orientation='horizontal')
+    # # cbar = plt.colorbar(contourf, ax=ax, shrink=0.8, pad=0.05, orientation='horizontal')
+    # # cbar.set_label('MSE', fontsize=11)
+    # cbar.ax.tick_params(labelsize=35)
+
+
+
     cbar = plt.colorbar(contourf, ax=ax, shrink=0.8, pad=0.05, orientation='horizontal')
-    cbar.set_label('Accuracy', fontsize=11)
-    cbar.ax.tick_params(labelsize=9)
+    cbar.locator = MaxNLocator(nbins=5)  # Aims for ~5 ticks with nice round values
+    cbar.update_ticks()
+    cbar.ax.tick_params(labelsize=35)
+
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
+
+
     plt.close(fig)
     print(f"Saved transparent robot hemisphere to {output_path}")
 
@@ -561,3 +752,4 @@ def plot_hemisphere_transparent_robot(vis, output_path, robot_image_path,
 
 if __name__ == "__main__":
     example_usage()
+

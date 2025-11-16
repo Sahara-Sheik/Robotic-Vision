@@ -3,14 +3,17 @@
 ## 🎯 112 Camera System with our data
 
 ### Files Created for You:
-1. **process_112_cameras.py** - Main processing script
-3. **hemisphere_heatmap.py** - Core visualization library 
-4. **real_data_visualizer.py** - Data loading utilities 
+1. **process_112_cameras.py** - Main processing script for one model
+2. **process_112_cameras_multi_model.py** - - Main processing script for all models # need to add VIT here
+3. **hemisphere_heatmap.py** - Core visualization library
+4. **hemisphere_with_robot.py** - Core visualization library with Robot - works with hemisphere_heatmap.py
+5. **stacked_hemisphere** - Created our stacked figures
+
 
 ## 🚀 Quick Start Instructions
 
-### Step 1: Update Your File Paths to where you have stored the mse results and camera postions
-Open `process_112_cameras.py` and change these:
+### Step 1: Update Your File Paths
+Open `process_112_cameras.py` and `plots_per_component_all_models.py` and `process_112_cameras_multi_model.py` and ` stacked_hemisphere.py` and change these:
 
 ```python
 # Change these to match your actual paths:
@@ -18,6 +21,8 @@ Open `process_112_cameras.py` and change these:
 BASE_FOLDER = "C:\...\112cam"
 CAMERA_PLACEMENTS_FILE = "C:\\...\camera_placements.txt"
 OUTPUT_DIR = "C:\....\\hemisphere_output"
+ROBOT_IMAGE_PATH_3D = "C:\\Users\\rkhan\\Downloads\\robot.png"
+ROBOT_IMAGE_PATH_TOP = "C:\\Users\\rkhan\\Downloads\\robot_top.png"
 ```
 
 ### Step 2: Run the Script
@@ -40,11 +45,11 @@ One for each component:
 ### 6 Hemisphere Visualizations for gradient
 One for each component:
 - **height** -
-- **distance** 
-- **heading** 
-- **wrist_angle** 
-- **wrist_rotation** 
-- **gripper** 
+- **distance**
+- **heading**
+- **wrist_angle**
+- **wrist_rotation**
+- **gripper**
 
 ### Output Files
 ```
@@ -69,9 +74,9 @@ I have added more here so I need to update this
 ## 🔍 Understanding Results
 
 ### Reading the Hemispheres
-- **Red/Orange areas**: High accuracy (good camera positions)
-- **Yellow areas**: Medium accuracy
-- **Dark/Black areas**: Low accuracy (poor camera positions)
+- **Red/Orange areas**: High mse (bad camera positions)
+- **Yellow areas**: Medium mse
+- **Dark/Black areas**: Low mse (good camera positions)
 - **dots**: Individual camera positions
 
 ### Camera Layout
@@ -83,11 +88,7 @@ I have added more here so I need to update this
 - Ring at 80°: 12 cameras
 - Top at 90°: 4 cameras
 
-### How to run:
-```python
-# This reads our  112cam folder
-python process_112_cameras.py
-```
+
 
 ### Custom Analysis:
 ```python
@@ -140,9 +141,9 @@ We can use this to:
 
 - [ ] All 112 camera folders exist (dev000 to dev111)
 - [ ] Each has msecomparison_values.csv file
-- [ ] camera_placements.txt has 112 camera positions
+- [ ] camera_placements.txt has 112 camera positions ## FIXME so its dynamically counts number of cams
 - [ ] Python packages installed (numpy, matplotlib, scipy, pandas)
-- [ ] Paths updated in process_112_cameras.py
+- [ ] Paths updated in all the files
 
 
 
